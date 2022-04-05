@@ -58,7 +58,7 @@ parser.add_argument('--norm_layer', default='group')
 parser.add_argument('--swa', action="store_true", help="perform stochastic weight averaging at the end of the training")
 parser.add_argument('--swa_repeat', type=int, default=5, help="how many warm restarts to perform")
 # parser.add_argument('--optim', choices=['adam', 'sgd', 'ranger', 'adamw'], default='ranger')
-parser.add_argument('--optim', choices=['adam', 'sgd', 'adamw'], default='adamw')
+parser.add_argument('--optim', choices=['adam', 'sgd', 'adamw'], default='adam')
 parser.add_argument('--com', help="add a comment to this run!")
 parser.add_argument('--dropout', type=float, help="amount of dropout to use", default=0.)
 parser.add_argument('--warm_restart', action='store_true',
@@ -409,7 +409,7 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
 
     end = time.perf_counter()
     metrics = []
-    print(f"fp 16 True or False ?? : {not no_fp16}")
+    # print(f"fp 16 True or False ?? : {not no_fp16}")
     # TODO: not recreate data_aug for each epoch...
     # data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=True).cuda()
     data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=True).to(device)
