@@ -223,8 +223,8 @@ class WeightSWA(object):  # 传进去的object参数是model  # 这是干啥的�
 
 
 def save_metrics(epoch, metrics, swa, writer, current_epoch, teacher=False, save_folder=None): # teacher 是False!!
-    metrics = list(zip(*metrics)) # 这是分别算好的ET,TC,WT的dice！！
-    print("save_metrics里面的metrics: ", metrics)
+    metrics = list(zip(*metrics)) # 这是分别算好的ET,TC,WT的dice！！是每个人的3个metric
+    # print("save_metrics里面的metrics: ", metrics)
     # TODO check if doing it directly to numpy work
     metrics = [torch.tensor(dice, device="cpu").numpy() for dice in metrics]
     # print(metrics)
