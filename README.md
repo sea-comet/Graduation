@@ -1,10 +1,6 @@
 # BraTS 2020 solution -- modified version for graduation project
 
-This is the repository of our solution to the 2020 edition of the BraTS challenge. 
-Our paper is available at [arXiv](https://arxiv.org/abs/2011.01045).
-
 This repository implements Pipeline A training and inference only.
-Feel free to use it as a starter for following challenge editions!
 
 # Demo results
 
@@ -17,8 +13,6 @@ Feel free to use it as a starter for following challenge editions!
 </p>
 
 # Installation
-
-in your favorite virtual environment:
 
 ```bash
 pip install -r requirements.txt
