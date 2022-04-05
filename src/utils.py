@@ -89,7 +89,7 @@ class ProgressMeter(object):  # 已看，没太看懂干啥的
     def _get_batch_fmtstr(num_batches):
         num_digits = len(str(num_batches // 1))
         fmt = '{:' + str(num_digits) + 'd}'
-        return '[' + fmt + '/' + fmt.format(num_batches+1) + ']'
+        return '[' + fmt + '/' + fmt.format(num_batches) + ']'
 
 
 # TODO remove dependency to args
