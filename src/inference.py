@@ -21,11 +21,11 @@ from src.tta import apply_simple_tta
 from src.utils import reload_ckpt_bis
 
 parser = argparse.ArgumentParser(description='Brats validation and testing dataset inference')
-parser.add_argument('--config', default='', type=str, metavar='PATH',
+parser.add_argument('--config', default='', type=str, metavar='PATH', # path to 装有config的训练好的model和参数啥的，yaml文件
                     help='path(s) to the trained models config yaml you want to use', nargs="+")
-parser.add_argument('--devices', required=True, type=str,
+parser.add_argument('--devices', required=True, type=str,  # 记得要传个参数 0
                     help='Set the CUDA_VISIBLE_DEVICES env var from this string')
-parser.add_argument('--on', default="val", choices=["val","train","test"])
+parser.add_argument('--on', default="val", choices=["val","train","test"])  # 默认是validation
 parser.add_argument('--tta', action="store_true")
 parser.add_argument('--seed', default=16111990)
 
@@ -37,25 +37,25 @@ def main(args):
     if ngpus == 0:
         raise RuntimeWarning("This will not be able to run on CPU only")
     print(f"Working with {ngpus} GPUs")
-    print(args.config)
+    # print("设置的args: ", args.config)
 
     current_experiment_time = datetime.now().strftime('%Y%m%d_%T').replace(":", "")
-    save_folder = pathlib.Path(f"./preds/{current_experiment_time}")
+    save_folder = pathlib.Path(f"./preds/{current_experiment_time}") # 记住在preds文件夹下面!!
     save_folder.mkdir(parents=True, exist_ok=True)
 
     with (save_folder / 'args.txt').open('w') as f:
-        print(vars(args), file=f)
+        print(vars(args), file=f)         # 把参数设置写进文件
 
     args_list = []
     for config in args.config:
-        config_file = pathlib.Path(config).resolve()
+        config_file = pathlib.Path(config).resolve()  # 搞成绝对路径
         print(config_file)
-        ckpt = config_file.with_name("model_best.pth.tar")
+        ckpt = config_file.with_name("model_best.pth.tar")  # 换了一个文件名
         with config_file.open("r") as file:
-            old_args = yaml.safe_load(file)
-            old_args = SimpleNamespace(**old_args, ckpt=ckpt)
+            old_args = yaml.safe_load(file)  # 打开yaml文件
+            old_args = SimpleNamespace(**old_args, ckpt=ckpt)  # 把args从yaml文件load进来
             # set default normalisation
-            if not hasattr(old_args, "normalisation"):
+            if not hasattr(old_args, "normalisation"):    # 如果training 的参数里没有指定Normalization就用默认minmax
                 old_args.normalisation = "minmax"
         print(old_args)
         args_list.append(old_args)
@@ -74,8 +74,8 @@ def main(args):
 
     models_list = []
     normalisations_list = []
-    for model_args in args_list:
-        print(model_args.arch)
+    for model_args in args_list:  # model_args 是从yaml文件里load进来的
+        print(model_args.arch)   # 用了哪一个model
         model_maker = getattr(models, model_args.arch)
 
         model = model_maker(
@@ -84,11 +84,11 @@ def main(args):
             norm_layer=get_norm_layer(model_args.norm_layer), dropout=model_args.dropout)
         print(f"Creating {model_args.arch}")
 
-        reload_ckpt_bis(str(model_args.ckpt), model)
+        reload_ckpt_bis(str(model_args.ckpt), model)  # 把 best ckpt load进来
         models_list.append(model)
         normalisations_list.append(model_args.normalisation)
         print("reload best weights")
-        print(model)
+        print("model info: ", model)
 
     dataset_minmax = get_datasets(args.seed, False, no_seg=True,
                                   on=args.on, normalisation="minmax")
@@ -102,12 +102,15 @@ def main(args):
     loader_zscore = torch.utils.data.DataLoader(
         dataset_zscore, batch_size=1, num_workers=2)
 
-    print("Val dataset number of batch:", len(loader_minmax))
+    print("Val dataset number of batch: ", len(loader_minmax)) # 几个batch, 也就是几个脑子
+
+    # 这个generate_segmentations函数是下面的这个，不是utils.py里面的
     generate_segmentations((loader_minmax, loader_zscore), models_list, normalisations_list, args)
 
 
 def generate_segmentations(data_loaders, models, normalisations, args):
-    # TODO: try reuse the function used for train...
+    # TODO: try reuse the function used for train... # 试着把这个和utils.py里面的函数合体
+    # 它可以这样是因为dataloader没有shuffle,还设置了random seed
     for i, (batch_minmax, batch_zscore) in enumerate(zip(data_loaders[0], data_loaders[1])):
         patient_id = batch_minmax["patient_id"][0]
         ref_img_path = batch_minmax["seg_path"][0]
@@ -133,16 +136,17 @@ def generate_segmentations(data_loaders, models, normalisations, args):
             model.cuda()  # go to gpu
             with autocast():
                 with torch.no_grad():
-                    if args.tta:
-                        pre_segs = apply_simple_tta(model, inputs, True)
+                    if args.tta:  # 如果需要进行test time augmentation:
+                        # apply_simple_tta 函数在tta.py 文件里可以找到
+                        pre_segs = apply_simple_tta(model, inputs, True) # 看tta.py文件！！
                         model_preds.append(pre_segs)
-                    else:
+                    else: # deep supervision 时不需要tta
                         if model.deep_supervision:
                             pre_segs, _ = model(inputs)
                         else:
                             pre_segs = model(inputs)
                         pre_segs = pre_segs.sigmoid_().cpu()
-                    # remove pads
+                    # remove pads 移除padding
                     maxz, maxy, maxx = pre_segs.size(2) - pads[0], pre_segs.size(3) - pads[1], pre_segs.size(4) - \
                                        pads[2]
                     pre_segs = pre_segs[:, :, 0:maxz, 0:maxy, 0:maxx].cpu()
@@ -167,7 +171,7 @@ def generate_segmentations(data_loaders, models, normalisations, args):
         labelmap = sitk.GetImageFromArray(labelmap)
         ref_img = sitk.ReadImage(ref_img_path)
         labelmap.CopyInformation(ref_img)
-        print(f"Writing {str(args.pred_folder)}/{patient_id}.nii.gz")
+        print(f"Writing {str(args.pred_folder)}/{patient_id}.nii.gz")   # 还是一个合体的
         sitk.WriteImage(labelmap, f"{str(args.pred_folder)}/{patient_id}.nii.gz")
 
 
