@@ -1,4 +1,4 @@
-# BraTS 2020 solution -- modified version for graduation project
+# BraTS 2020 segmentation -- modified version for graduation project
 
 This repository implements Pipeline A training and inference only.
 
