@@ -1,10 +1,6 @@
-# Top 10 BraTS 2020 open sourced solution
-
-This is the repository of our solution to the 2020 edition of the BraTS challenge. 
-Our paper is available at [arXiv](https://arxiv.org/abs/2011.01045).
+# BraTS 2020 segmentation -- for graduation project
 
 This repository implements Pipeline A training and inference only.
-Feel free to use it as a starter for following challenge editions!
 
 # Demo results
 
