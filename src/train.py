@@ -383,7 +383,7 @@ def main(args):
 
     try:  # 用训练结束的模型ckpt来生成segmentation！！！
         df_individual_perf = pd.DataFrame.from_records(patients_perf)  # patients performance吗？？
-        print("DataFrame records df_individual_perf: ",df_individual_perf,"\n")
+        # print("DataFrame records df_individual_perf: ",df_individual_perf,"\n")
         df_individual_perf.to_csv(f'{str(args.save_folder)}/patients_indiv_perf.csv')
         reload_ckpt_bis(f'{str(args.save_folder)}/model_best.pth.tar', model)  # reload_ckpt_bis函数在utils.py文件里可以找到
         generate_segmentations(bench_loader, model, t_writer, args)  # generate_segmentations函数在utils.py文件里可以找到
