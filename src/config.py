@@ -6,17 +6,22 @@ from pathlib import Path
 # BRATS_VAL_FOLDER = f"/home/{user}/Datasets/brats2020/MICCAI_BraTS2020_ValidationData"
 # BRATS_TEST_FOLDER = f"/home/{user}/Datasets/brats2020/MICCAI_BraTS2020_TestingData"
 
-BRATS_TRAIN_FOLDERS = "./../Dataset_small/BraTS2020_TrainingData/MICCAI_BraTS2020_TrainingData"
-BRATS_VAL_FOLDER = "./../Dataset_small/BraTS2020_ValidationData/MICCAI_BraTS2020_ValidationData"
-BRATS_TEST_FOLDER = "./../Dataset_small/BraTS2020_TestingData/MICCAI_BraTS2020_TestingData"
+# 用于本地的路径
+# BRATS_TRAIN_FOLDERS = "./../Dataset_small/BraTS2020_TrainingData/MICCAI_BraTS2020_TrainingData"
+# BRATS_VAL_FOLDER = "./../Dataset_small/BraTS2020_ValidationData/MICCAI_BraTS2020_ValidationData"
+# BRATS_TEST_FOLDER = "./../Dataset_small/BraTS2020_TestingData/MICCAI_BraTS2020_TestingData"
 
 
-'''
-用于colab的路径
-BRATS_TRAIN_FOLDERS = "./../drive/My Drive/Dataset_small/BraTS2020_TrainingData/MICCAI_BraTS2020_TrainingData"
-BRATS_VAL_FOLDER = "./../drive/My Drive/Dataset_small/BraTS2020_ValidationData/MICCAI_BraTS2020_ValidationData"
-BRATS_TEST_FOLDER = "./../drive/My Drive/Dataset_small/BraTS2020_TestingData/MICCAI_BraTS2020_TestingData"
-'''
+# # 用于colab的路径 -- Dataset_small
+# BRATS_TRAIN_FOLDERS = "./../drive/My Drive/Dataset_small/BraTS2020_TrainingData/MICCAI_BraTS2020_TrainingData"
+# BRATS_VAL_FOLDER = "./../drive/My Drive/Dataset_small/BraTS2020_ValidationData/MICCAI_BraTS2020_ValidationData"
+# BRATS_TEST_FOLDER = "./../drive/My Drive/Dataset_small/BraTS2020_TestingData/MICCAI_BraTS2020_TestingData"
+
+# 用于colab的路径 -- Dataset
+BRATS_TRAIN_FOLDERS = "./../drive/My Drive/Dataset/BraTS2020_TrainingData/MICCAI_BraTS2020_TrainingData"
+BRATS_VAL_FOLDER = "./../drive/My Drive/Dataset/BraTS2020_ValidationData/MICCAI_BraTS2020_ValidationData"
+BRATS_TEST_FOLDER = "./../drive/My Drive/Dataset/BraTS2020_TestingData/MICCAI_BraTS2020_TestingData"
+
 
 def get_brats_folder(on="val"):
     if on == "train":
