@@ -38,7 +38,7 @@ def pad_batch_to_max_shape(batch): # 没太看懂是干什么的，不会是给�
 
 
 def pad_batch1_to_compatible_size(batch):
-    print("batch的shape: ", batch.shape)
+    print("pad过的batch shape: ", batch.shape)
     shape = batch.shape
     zyx = list(shape[-3:])
     for i, dim in enumerate(zyx): # 循环为z,y,x维度的大小

@@ -190,6 +190,7 @@ def calculate_metrics(preds, targets, patient, tta=False):   # 在generate_segme
         metrics[DICE] = dice
         metrics[SENS] = sens
         metrics[SPEC] = spec
+        print("metrics: ")
         pp.pprint(metrics)
         metrics_list.append(metrics) # metrics_list 是一个含有3个metrics字典的list, 对ET,TC,WT各一个
 
@@ -223,8 +224,8 @@ class WeightSWA(object):  # 传进去的object参数是model  # 这是干啥的�
 
 
 def save_metrics(epoch, metrics, swa, writer, current_epoch, teacher=False, save_folder=None): # teacher 是False!!
-    metrics = list(zip(*metrics)) # 这是分别算好的ET,TC,WT的dice！！
-    print("save_metrics里面的metrics: ", metrics)
+    metrics = list(zip(*metrics)) # 这是分别算好的ET,TC,WT的dice！！是每个人的3个metric
+    # print("save_metrics里面的metrics: ", metrics)
     # TODO check if doing it directly to numpy work
     metrics = [torch.tensor(dice, device="cpu").numpy() for dice in metrics]
     # print(metrics)
@@ -298,7 +299,7 @@ def generate_segmentations(data_loader, model, writer, args):
         metrics_list.append(patient_metric_list)
         # labelmap 里是自己预测的图像，再加进真实图像，大概是要做对比？？？？nii.gz 文件存在了seg文件夹下面！！
         labelmap.CopyInformation(ref_seg_img)
-        print(f"Writing {args.seg_folder}/{patient_id}.nii.gz")
+        print(f"Writing new segmentation as {args.seg_folder}/{patient_id}.nii.gz\n")
         sitk.WriteImage(labelmap, f"{args.seg_folder}/{patient_id}.nii.gz")
 
     val_metrics = [item for sublist in metrics_list for item in sublist]
