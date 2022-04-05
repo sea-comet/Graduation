@@ -1,4 +1,4 @@
-# Top 10 BraTS 2020 open sourced solution
+# BraTS 2020 solution -- modified version for graduation project
 
 This is the repository of our solution to the 2020 edition of the BraTS challenge. 
 Our paper is available at [arXiv](https://arxiv.org/abs/2011.01045).
