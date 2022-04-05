@@ -96,7 +96,7 @@ class Brats(Dataset):
 def get_datasets(seed, debug, no_seg=False, on="train", full=False,
                  fold_number=0, normalisation="minmax"):                # 默认是minmax normalization
     base_folder = pathlib.Path(get_brats_folder(on)).resolve()  # get_brats_folder 函数在config.py 里面
-    print(f"{on} dataset path : {base_folder}")
+    print(f"{on} dataset path : {base_folder}\n")
     assert base_folder.exists()
     patients_dir = sorted([x for x in base_folder.iterdir() if x.is_dir()]) # 取出数据集里各个数据的地址，并排序
     if full: # 如果用了整个数据集,就是,没有用 5 fold 交叉验证

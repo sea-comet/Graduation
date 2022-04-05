@@ -49,7 +49,7 @@ def main(args):
     args_list = []
     for config in args.config:
         config_file = pathlib.Path(config).resolve()  # 搞成绝对路径
-        print(config_file)
+        print("config file: ",config_file)
         ckpt = config_file.with_name("model_best.pth.tar")  # 换了一个文件名
         with config_file.open("r") as file:
             old_args = yaml.safe_load(file)  # 打开yaml文件
@@ -57,7 +57,7 @@ def main(args):
             # set default normalisation
             if not hasattr(old_args, "normalisation"):    # 如果training 的参数里没有指定Normalization就用默认minmax
                 old_args.normalisation = "minmax"
-        print(old_args)
+        print("old args: ",old_args)
         args_list.append(old_args)
 
     if args.on == "test":
@@ -75,7 +75,7 @@ def main(args):
     models_list = []
     normalisations_list = []
     for model_args in args_list:  # model_args 是从yaml文件里load进来的
-        print(model_args.arch)   # 用了哪一个model
+        # print("Model used: ",model_args.arch)   # 用了哪一个model
         model_maker = getattr(models, model_args.arch)
 
         model = model_maker(
@@ -88,7 +88,7 @@ def main(args):
         models_list.append(model)
         normalisations_list.append(model_args.normalisation)
         print("reload best weights")
-        print("model info: ", model)
+        # print("model info: ", model)
 
     dataset_minmax = get_datasets(args.seed, False, no_seg=True,
                                   on=args.on, normalisation="minmax")
@@ -150,10 +150,10 @@ def generate_segmentations(data_loaders, models, normalisations, args):
                     maxz, maxy, maxx = pre_segs.size(2) - pads[0], pre_segs.size(3) - pads[1], pre_segs.size(4) - \
                                        pads[2]
                     pre_segs = pre_segs[:, :, 0:maxz, 0:maxy, 0:maxx].cpu()
-                    print("pre_segs size", pre_segs.shape)
+                    # print("pre_segs size", pre_segs.shape)
                     segs = torch.zeros((1, 3, 155, 240, 240))
                     segs[0, :, slice(*crops_idx[0]), slice(*crops_idx[1]), slice(*crops_idx[2])] = pre_segs[0]
-                    print("segs size", segs.shape)
+                    # print("segs size", segs.shape)
 
                     model_preds.append(segs)
             model.cpu()  # free for the next one
@@ -171,7 +171,7 @@ def generate_segmentations(data_loaders, models, normalisations, args):
         labelmap = sitk.GetImageFromArray(labelmap)
         ref_img = sitk.ReadImage(ref_img_path)
         labelmap.CopyInformation(ref_img)
-        print(f"Writing {str(args.pred_folder)}/{patient_id}.nii.gz")   # 还是一个合体的
+        print(f"Writing new segmentation as {str(args.pred_folder)}/{patient_id}.nii.gz")   # 还是一个合体的
         sitk.WriteImage(labelmap, f"{str(args.pred_folder)}/{patient_id}.nii.gz")
 
 

@@ -159,7 +159,7 @@ class Att_EquiUnet(Unet):  # 继承的Unet，所以forward函数和Unet一样
                  **kwargs):
         super(Unet, self).__init__()
         features = [width * 2 ** i for i in range(4)]
-        print(features)
+        print("model features: ", features)
 
         self.deep_supervision = deep_supervision
 
@@ -212,7 +212,7 @@ class Atten_Unet(Unet):  # 继承的Unet，所以forward函数和Unet一样
                  **kwargs):
         super(Unet, self).__init__()
         features = [width * 2 ** i for i in range(4)]
-        print(features)
+        print("model features: ", features)
 
         self.deep_supervision = deep_supervision
 

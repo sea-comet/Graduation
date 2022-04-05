@@ -44,10 +44,7 @@ class EDiceLoss(nn.Module):
     def forward(self, inputs, target):
         dice = 0
         flag = 0       # 我新加的，打印出inputs和targets的shape
-        if flag == 0:
-            print("inputs shape: ",inputs.shape)
-            print("target shape: ",target.shape)
-        flag += 1
+    
         for i in range(target.size(1)):   # i 应该为3个肿瘤区域的map, 分别为ET, TC, WT
             dice = dice + self.binary_dice(inputs[:, i, ...], target[:, i, ...], i)  # binary_dice 函数在上面
             # 此时metric_mode 是False!!

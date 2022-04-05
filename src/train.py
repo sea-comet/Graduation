@@ -52,7 +52,7 @@ parser.add_argument('--no_fp16', action="store_true")
 parser.add_argument('--seed', default=16111990, help="seed for train/val split")
 parser.add_argument('--warm', default=3, type=int, help="number of warming up epochs")
 
-parser.add_argument('--val', default=3, type=int, help="how often to perform validation step")
+parser.add_argument('--val', default=5, type=int, help="how often to perform validation step")
 parser.add_argument('--fold', default=0, type=int, help="Split number (0 to 4)")  # 这个应该是交叉验证
 parser.add_argument('--norm_layer', default='group')
 parser.add_argument('--swa', action="store_true", help="perform stochastic weight averaging at the end of the training")
@@ -75,7 +75,7 @@ ngpus = torch.cuda.device_count()
 # if ngpus == 0:
 #     raise RuntimeWarning("This will not be able to run on CPU only")
 
-print(f"Working with {ngpus} GPUs")
+# print(f"Working with {ngpus} GPUs")
 
 
 #    if args.optim.lower() == "ranger":
@@ -117,7 +117,7 @@ def main(args):
     t_writer = SummaryWriter(str(args.save_folder))  # Tensorboard 里面的
 
     # Create model
-    print(f"Creating {args.arch}")
+    print(f"Creating {args.arch} model...\n")
 
     model_maker = getattr(models, args.arch)  # 大概意思就是获取Unet,  EquiUnet 或者 Att_EquiUnet
 
@@ -126,7 +126,7 @@ def main(args):
         width=args.width, deep_supervision=args.deep_sup,
         norm_layer=get_norm_layer(args.norm_layer), dropout=args.dropout)  # get_norm_layer函数在model下面的 layers.py里
 
-    print(f"total number of trainable parameters {count_parameters(model)}")  # count_parameters 函数在utils.py里面
+    print(f"total number of trainable parameters {count_parameters(model)}\n")  # count_parameters 函数在utils.py里面
 
     if args.swa:  # 其中一个参数，stochastic weight averaging，训练后的随机梯度平均，看论文
         # Create the average model
@@ -218,7 +218,7 @@ def main(args):
 
     # Actual Train loop
     best = np.inf  # ？？？？这是干啥的？？？
-    print("start warm-up now!")  # 看不懂！！　cur_iter 是什么？？然后warm up 怎么弄的，看论文！！
+    print("start warm-up now! 3 epochs")  # 看不懂！！　cur_iter 是什么？？然后warm up 怎么弄的，看论文！！
     if args.warm != 0:  # 默认有3个epoch的最初warm
         tot_iter_train = len(train_loader)
         scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer,  # 这是啥玩意儿？？
@@ -256,7 +256,7 @@ def main(args):
                                                                    args.epochs * 0.5))
 
     # 这里才开始了正式训练！！！！！！！！
-    print("start training now!")
+    print("start training now!...")
     if args.swa:  # Stochastic weight averaging 训练后的随机梯度平均
         # c = 15, k=3, repeat = 5 # 这是干啥的？？？看论文！！！c, k repeat 是干啥的？？？？？？？c估计是总共swa epoch数，k是每几个epoch 更新一次
         c, k, repeat = 30, 3, args.swa_repeat
@@ -266,6 +266,7 @@ def main(args):
             c, k, repeat = 2, 1, 2
 
     for epoch in range(args.start_epoch + args.warm, args.epochs + args.warm):
+        print(f"Epoch {epoch} start training: ")
         try:
             # do_epoch for one epoch
             ts = time.perf_counter()
@@ -274,10 +275,11 @@ def main(args):
                                  scaler, save_folder=args.save_folder,
                                  no_fp16=args.no_fp16, patients_perf=patients_perf)
             te = time.perf_counter()
-            print(f"Train Epoch done in {te - ts} s")
+            print(f"Train Epoch {epoch} done in {te - ts} s\n")
 
             # Validate at the end of epoch every val step
             if (epoch + 1) % args.val == 0 and not args.full:
+                print(f"Epoch {epoch} start validation: ")
                 model.eval()
                 with torch.no_grad():
                     validation_loss = step(val_loader, model, criterion, metric, args.deep_sup, optimizer,
@@ -301,7 +303,7 @@ def main(args):
                         save_folder=args.save_folder, )
 
                 ts = time.perf_counter()
-                print(f"Val epoch done in {ts - te} s")
+                print(f"Val epoch done in {ts - te} s\n")
 
             if args.swa:  # 看论文！！！！c 是干啥的？？？？这里干啥的没看懂！！！
                 if (args.epochs - epoch - c) == 0:
@@ -336,13 +338,13 @@ def main(args):
                                      current_epoch, t_writer,
                                      scaler, no_fp16=args.no_fp16, patients_perf=patients_perf)
                 te = time.perf_counter()
-                print(f"Train Epoch done in {te - ts} s")
+                print(f"Train Epoch done in {te - ts} s\n")
 
                 t_writer.add_scalar(f"SummaryLoss/train", training_loss, current_epoch)
                 #  怎么这TM才有Traning_loss?? 之前都是overfit
 
                 # update every k epochs and val: # 每k个epoch 更新一次
-                print(f"cycle number: {i}, swa_epoch: {swa_epoch}, total_cycle_to_do {repeat}")
+                print(f"cycle number: {i}, swa_epoch: {swa_epoch}, total_cycle_to_do {repeat}\n")
                 if (swa_epoch + 1) % k == 0:
                     swa_model_optim.update(model)
                     if not args.full:
@@ -381,7 +383,7 @@ def main(args):
 
     try:  # 用训练结束的模型ckpt来生成segmentation！！！
         df_individual_perf = pd.DataFrame.from_records(patients_perf)  # patients performance吗？？
-        print(df_individual_perf)
+        print("DataFrame records df_individual_perf: ",df_individual_perf,"\n")
         df_individual_perf.to_csv(f'{str(args.save_folder)}/patients_indiv_perf.csv')
         reload_ckpt_bis(f'{str(args.save_folder)}/model_best.pth.tar', model)  # reload_ckpt_bis函数在utils.py文件里可以找到
         generate_segmentations(bench_loader, model, t_writer, args)  # generate_segmentations函数在utils.py文件里可以找到
@@ -407,7 +409,7 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
 
     end = time.perf_counter()
     metrics = []
-    print(f"fp 16: {not no_fp16}")
+    print(f"fp 16 True or False ?? : {not no_fp16}")
     # TODO: not recreate data_aug for each epoch...
     # data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=True).cuda()
     data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=True).to(device)
