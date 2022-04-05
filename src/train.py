@@ -146,7 +146,7 @@ def main(args):
     else:
         # model = model.cuda()
         model = model.to(device)
-    print("Model info: ", model)  # 这里有个打印 model ！！ 可以先不要！！！打出来乱七八糟的！！
+    # print("Model info: ", model)  # 这里有个打印 model ！！ 可以先不要！！！打出来乱七八糟的！！
     model_file = args.save_folder / "model.txt"  # 在runs 目录下面
     with model_file.open("w") as f:
         print(model, file=f)
@@ -178,7 +178,7 @@ def main(args):
         reload_ckpt(args, model, optimizer)  # reload_ckpt函数在utils.py 里面可以找到
 
     if args.debug:  # 可以用来测试
-        args.epochs = 2
+        args.epochs = 3
         args.warm = 0
         args.val = 1
 

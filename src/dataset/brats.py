@@ -110,10 +110,10 @@ def get_datasets(seed, debug, no_seg=False, on="train", full=False,
                      no_seg=no_seg, normalisation=normalisation)
     kfold = KFold(5, shuffle=True, random_state=seed)  # 5折验证，这里用了seed !!为什么呢???
     splits = list(kfold.split(patients_dir))
-    print("打印出来path 用5 fold产出来的splits看看是什么玩意儿：", splits)
+    # print("打印出来path 用5 fold产出来的splits看看是什么玩意儿：", splits)
     train_idx, val_idx = splits[fold_number] # 这返回的应该是path的id
-    print("first idx of train", train_idx[0])
-    print("first idx of test", val_idx[0])
+    # print("first idx of train", train_idx[0])
+    # print("first idx of test", val_idx[0])
     train = [patients_dir[i] for i in train_idx]
     val = [patients_dir[i] for i in val_idx]
     # return patients_dir # 用了 5 fold 交叉验证的, 用了五分之四的数据来训练
