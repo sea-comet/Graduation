@@ -406,7 +406,7 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
     mode = "train" if model.training else "val"
     batch_per_epoch = len(data_loader)
     progress = ProgressMeter(
-        batch_per_epoch+1,
+        batch_per_epoch,
         [batch_time, data_time, losses],
         prefix=f"{mode} Epoch: [{epoch+1}]")
 
