@@ -494,7 +494,7 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
 
     if mode == "train":  # 训练模式
         writer.add_scalar(f"SummaryLoss/train", losses.avg, epoch)  # 这些在Tensorboard 都可以看到！！
-        writer.add_scalar(f"SummaryAcc/train", 1. - losses.avg, epoch)
+        writer.add_scalar(f"SummaryAcc/train", 1. - losses.avg, epoch) # 在tensorboard加了一个关于accuracy的scaler
     else:  # validation模式
         writer.add_scalar(f"SummaryLoss/val", losses.avg, epoch)
         writer.add_scalar(f"SummaryAcc/val", 1. - losses.avg, epoch)
