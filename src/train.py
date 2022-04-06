@@ -476,8 +476,6 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
             scaler.update()
             optimizer.zero_grad()
             writer.add_scalar("lr", optimizer.param_groups[0]['lr'], global_step=epoch * batch_per_epoch + i)
-            # 这里在Tensorborad 里面增加了model的图
-            writer.add_graph(model,(inputs,))
 
         if scheduler is not None:
             scheduler.step()
