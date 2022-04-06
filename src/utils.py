@@ -70,7 +70,7 @@ class AverageMeter(object):  # 已看。更新数据，计算平均值
         self.avg = self.sum / self.count
 
     def __str__(self):
-        fmtstr = '{name} {val' + self.fmt + '} (Avg:{avg' + self.fmt + '})'
+        fmtstr = '{name} {val' + self.fmt + '} ({avg' + self.fmt + '})'
         return fmtstr.format(**self.__dict__)
 
 
