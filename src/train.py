@@ -401,13 +401,14 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
     # Setup
     batch_time = AverageMeter('BatchTime', ':6.3f')  # utils.py 里有
     data_time = AverageMeter('DataTime', ':6.3f')
-    losses = AverageMeter('Loss', ':6.4f')
+    losses = AverageMeter('Loss', ':6.5f')
+    Acc = AverageMeter('Acc', ':6.5f')
     # TODO monitor teacher loss
     mode = "train" if model.training else "val"
     batch_per_epoch = len(data_loader)
     progress = ProgressMeter(
         batch_per_epoch,
-        [batch_time, data_time, losses],
+        [batch_time, data_time, losses, Acc],
         prefix=f"{mode} Epoch: [{epoch+1}]")
 
     end = time.perf_counter()
