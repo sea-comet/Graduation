@@ -401,8 +401,8 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
     # Setup
     batch_time = AverageMeter('BatchTime', ':6.3f')  # utils.py 里有
     data_time = AverageMeter('DataTime', ':6.3f')
-    losses = AverageMeter('Loss', ':6.5f')
-    Acc = AverageMeter('Acc', ':6.5f')
+    losses = AverageMeter('Loss', ':6.4f')
+    Acc = AverageMeter('Acc', ':6.4f')
     # TODO monitor teacher loss
     mode = "train" if model.training else "val"
     batch_per_epoch = len(data_loader)
@@ -462,7 +462,8 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
 
             # measure accuracy and record loss_ 衡量准确度，记录loss
             if not np.isnan(loss_.item()):
-                losses.update(loss_.item())  # 这是个AverageMeter ！！！可以update
+                losses.update(loss_.item())
+                Acc.update(1. - loss_.item())# 这是个AverageMeter ！！！可以update
             else:
                 print("NaN in model loss!!")
 
@@ -493,8 +494,10 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
 
     if mode == "train":  # 训练模式
         writer.add_scalar(f"SummaryLoss/train", losses.avg, epoch)  # 这些在Tensorboard 都可以看到！！
+        writer.add_scalar(f"SummaryAcc/train", 1. - losses.avg, epoch)
     else:  # validation模式
         writer.add_scalar(f"SummaryLoss/val", losses.avg, epoch)
+        writer.add_scalar(f"SummaryAcc/val", 1. - losses.avg, epoch)
 
     return losses.avg
 
