@@ -399,16 +399,16 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
          scheduler=None, swa=False, save_folder=None, no_fp16=False, patients_perf=None):
 
     # Setup
-    batch_time = AverageMeter('Time', ':6.3f')  # utils.py 里有
-    data_time = AverageMeter('Data', ':6.3f')
-    losses = AverageMeter('Loss', ':.4e')
+    batch_time = AverageMeter('BatchTime', ':6.3f')  # utils.py 里有
+    data_time = AverageMeter('DataTime', ':6.3f')
+    losses = AverageMeter('Loss', ':6.4f')
     # TODO monitor teacher loss
     mode = "train" if model.training else "val"
     batch_per_epoch = len(data_loader)
     progress = ProgressMeter(
-        batch_per_epoch,
+        batch_per_epoch+1,
         [batch_time, data_time, losses],
-        prefix=f"{mode} Epoch: [{epoch}]")
+        prefix=f"{mode} Epoch: [{epoch+1}]")
 
     end = time.perf_counter()
     metrics = []
@@ -484,7 +484,7 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
         batch_time.update(time.perf_counter() - end)  # 这是个AverageMeter!!
         end = time.perf_counter()
         # Display progress
-        progress.display(i)  # 这是个ProgressMeter !!!
+        progress.display(i+1)  # 这是个ProgressMeter !!!
 
     if not model.training:  # 这个应该从model里找！！
         save_metrics(epoch, metrics, swa, writer, epoch, False, save_folder)  # save_metrics函数在utils.py 可以找到

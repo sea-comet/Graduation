@@ -27,7 +27,7 @@ class DataAugmenter(nn.Module):  # 按batch进行数据增广
     def forward(self, x):
         with torch.no_grad():
             if random() < self.p:  # 这是干什么？？？p是0.8   # 说明有0.8的概率会加噪声
-                x = x * uniform(0.9, 1.1)  # 在0.9~1.1 之间随便选一个数
+                x = x * uniform(0.8, 1.2)  # 在0.9~1.1 之间随便选一个数
                 std_per_channel = torch.stack(  # 对４个模态分别进行标准化？？
                     list(torch.std(x[:, i][x[:, i] > 0]) for i in range(x.size(1)))
                 )
