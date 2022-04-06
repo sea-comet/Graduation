@@ -52,7 +52,7 @@ parser.add_argument('--no_fp16', action="store_true")
 parser.add_argument('--seed', default=16111990, help="seed for train/val split")
 parser.add_argument('--warm', default=3, type=int, help="number of warming up epochs")
 
-parser.add_argument('--val', default=5, type=int, help="how often to perform validation step")
+parser.add_argument('--val', default=3, type=int, help="how often to perform validation step")
 parser.add_argument('--fold', default=0, type=int, help="Split number (0 to 4)")  # 这个应该是交叉验证
 parser.add_argument('--norm_layer', default='group')
 parser.add_argument('--swa', action="store_true", help="perform stochastic weight averaging at the end of the training")
@@ -127,6 +127,9 @@ def main(args):
         norm_layer=get_norm_layer(args.norm_layer), dropout=args.dropout)  # get_norm_layer函数在model下面的 layers.py里
 
     print(f"total number of trainable parameters {count_parameters(model)}\n")  # count_parameters 函数在utils.py里面
+
+    # 这里在Tensorborad 里面增加了model的图
+    t_writer.add_graph(model)
 
     if args.swa:  # 其中一个参数，stochastic weight averaging，训练后的随机梯度平均，看论文
         # Create the average model

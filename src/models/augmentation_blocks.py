@@ -13,7 +13,7 @@ class DataAugmenter(nn.Module):  # 按batch进行数据增广
     """Performs random flip and rotation batch wise, and reverse it if needed.
     Works"""
 
-    # 实际训练的时候p=0.8, drop_channel是True,其它是False
+    # 实际训练的时候p=0.8, drop_channel是True, 其它是False !!!
     def __init__(self, p=0.5, noise_only=False, channel_shuffling=False, drop_channnel=False):
         super(DataAugmenter, self).__init__()
         self.p = p
@@ -35,11 +35,11 @@ class DataAugmenter(nn.Module):  # 按batch进行数据增广
                 noise = torch.stack([torch.normal(0, std * 0.1, size=x[0, 0].shape) for std in std_per_channel]
                                     ).to(x.device)
                 x = x + noise
-                if random() < 0.2 and self.channel_shuffling:
+                if random() < 0.1 and self.channel_shuffling:
                     new_channel_order = sample(range(x.size(1)), x.size(1))
                     x = x[:, new_channel_order]
                     print("channel shuffling")
-                if random() < 0.2 and self.drop_channel:  # 说明有0.2的概率会扔掉channel
+                if random() < 0.1 and self.drop_channel:  # 说明有0.2的概率会扔掉channel
                     x[:, sample(range(x.size(1)), 1)] = 0
                     print("channel Dropping")
                 if self.noise_only: # 咱能不能直接用noise, 不用channel dropping?????!!!!记得改改！！！这个在train.py 里面传参True就可以
