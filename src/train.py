@@ -128,8 +128,7 @@ def main(args):
 
     print(f"total number of trainable parameters {count_parameters(model)}\n")  # count_parameters 函数在utils.py里面
 
-    # 这里在Tensorborad 里面增加了model的图
-    t_writer.add_graph(model)
+
 
     if args.swa:  # 其中一个参数，stochastic weight averaging，训练后的随机梯度平均，看论文
         # Create the average model
@@ -398,6 +397,9 @@ def main(args):
 # 注意这里有个step函数！！
 def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, optimizer, epoch, writer, scaler=None,
          scheduler=None, swa=False, save_folder=None, no_fp16=False, patients_perf=None):
+
+    # 这里在Tensorborad 里面增加了model的图
+    writer.add_graph(model)
     # Setup
     batch_time = AverageMeter('Time', ':6.3f')  # utils.py 里有
     data_time = AverageMeter('Data', ':6.3f')
