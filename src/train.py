@@ -398,8 +398,6 @@ def main(args):
 def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, optimizer, epoch, writer, scaler=None,
          scheduler=None, swa=False, save_folder=None, no_fp16=False, patients_perf=None):
 
-    # 这里在Tensorborad 里面增加了model的图
-    writer.add_graph(model)
     # Setup
     batch_time = AverageMeter('Time', ':6.3f')  # utils.py 里有
     data_time = AverageMeter('Data', ':6.3f')
@@ -478,6 +476,9 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
             scaler.update()
             optimizer.zero_grad()
             writer.add_scalar("lr", optimizer.param_groups[0]['lr'], global_step=epoch * batch_per_epoch + i)
+            # 这里在Tensorborad 里面增加了model的图
+            writer.add_graph(model,(inputs,))
+
         if scheduler is not None:
             scheduler.step()
 
