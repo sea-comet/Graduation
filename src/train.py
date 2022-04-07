@@ -409,7 +409,7 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
     progress = ProgressMeter(
         batch_per_epoch,
         [batch_time, data_time, losses, Acc],
-        prefix=f"{mode} Epoch: [{epoch+1}]")
+        prefix=f"{mode} Epoch: [{epoch}]")
 
     end = time.perf_counter()
     metrics = []

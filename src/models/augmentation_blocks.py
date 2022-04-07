@@ -27,7 +27,7 @@ class DataAugmenter(nn.Module):  # 按batch进行数据增广
     def forward(self, x):
         with torch.no_grad():
             if random() < self.p:  # 这是干什么？？？p是0.8   # 说明有0.8的概率会加噪声
-                x = x * uniform(0.8, 1.2)  # 在0.9~1.1 之间随便选一个数
+                x = x * uniform(0.9, 1.1)  # 在0.9~1.1 之间随便选一个数
                 std_per_channel = torch.stack(  # 对４个模态分别进行标准化？？
                     list(torch.std(x[:, i][x[:, i] > 0]) for i in range(x.size(1)))
                 )
@@ -35,11 +35,11 @@ class DataAugmenter(nn.Module):  # 按batch进行数据增广
                 noise = torch.stack([torch.normal(0, std * 0.1, size=x[0, 0].shape) for std in std_per_channel]
                                     ).to(x.device)
                 x = x + noise
-                if random() < 0.1 and self.channel_shuffling:
+                if random() < 0.2 and self.channel_shuffling:
                     new_channel_order = sample(range(x.size(1)), x.size(1))
                     x = x[:, new_channel_order]
                     print("channel shuffling")
-                if random() < 0.1 and self.drop_channel:  # 说明有0.2的概率会扔掉channel
+                if random() < 0.2 and self.drop_channel:  # 说明有0.2的概率会扔掉channel
                     x[:, sample(range(x.size(1)), 1)] = 0
                     print("channel Dropping")
                 if self.noise_only: # 咱能不能直接用noise, 不用channel dropping?????!!!!记得改改！！！这个在train.py 里面传参True就可以
