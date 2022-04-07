@@ -1,4 +1,4 @@
-# BraTS 2020 brain tumor segmentation -- modified version for graduation project
+# Brain tumor segmentation -- modified version for graduation project
 
 This repository implements Pipeline A training and inference only.
 
