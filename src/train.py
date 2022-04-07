@@ -52,13 +52,13 @@ parser.add_argument('--no_fp16', action="store_true")
 parser.add_argument('--seed', default=16111990, help="seed for train/val split")
 parser.add_argument('--warm', default=3, type=int, help="number of warming up epochs")
 
-parser.add_argument('--val', default=5, type=int, help="how often to perform validation step")
+parser.add_argument('--val', default=3, type=int, help="how often to perform validation step")
 parser.add_argument('--fold', default=0, type=int, help="Split number (0 to 4)")  # 这个应该是交叉验证
 parser.add_argument('--norm_layer', default='group')
 parser.add_argument('--swa', action="store_true", help="perform stochastic weight averaging at the end of the training")
 parser.add_argument('--swa_repeat', type=int, default=5, help="how many warm restarts to perform")
 # parser.add_argument('--optim', choices=['adam', 'sgd', 'ranger', 'adamw'], default='ranger')
-parser.add_argument('--optim', choices=['adam', 'sgd', 'adamw'], default='adamw')
+parser.add_argument('--optim', choices=['adam', 'sgd', 'adamw'], default='adam')
 parser.add_argument('--com', help="add a comment to this run!")
 parser.add_argument('--dropout', type=float, help="amount of dropout to use", default=0.)
 parser.add_argument('--warm_restart', action='store_true',
@@ -127,6 +127,8 @@ def main(args):
         norm_layer=get_norm_layer(args.norm_layer), dropout=args.dropout)  # get_norm_layer函数在model下面的 layers.py里
 
     print(f"total number of trainable parameters {count_parameters(model)}\n")  # count_parameters 函数在utils.py里面
+
+
 
     if args.swa:  # 其中一个参数，stochastic weight averaging，训练后的随机梯度平均，看论文
         # Create the average model
@@ -383,7 +385,7 @@ def main(args):
 
     try:  # 用训练结束的模型ckpt来生成segmentation！！！
         df_individual_perf = pd.DataFrame.from_records(patients_perf)  # patients performance吗？？
-        print("DataFrame records df_individual_perf: ",df_individual_perf,"\n")
+        # print("DataFrame records df_individual_perf: ",df_individual_perf,"\n")
         df_individual_perf.to_csv(f'{str(args.save_folder)}/patients_indiv_perf.csv')
         reload_ckpt_bis(f'{str(args.save_folder)}/model_best.pth.tar', model)  # reload_ckpt_bis函数在utils.py文件里可以找到
         generate_segmentations(bench_loader, model, t_writer, args)  # generate_segmentations函数在utils.py文件里可以找到
@@ -395,21 +397,23 @@ def main(args):
 # 注意这里有个step函数！！
 def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, optimizer, epoch, writer, scaler=None,
          scheduler=None, swa=False, save_folder=None, no_fp16=False, patients_perf=None):
+
     # Setup
-    batch_time = AverageMeter('Time', ':6.3f')  # utils.py 里有
-    data_time = AverageMeter('Data', ':6.3f')
-    losses = AverageMeter('Loss', ':.4e')
+    batch_time = AverageMeter('BatchTime', ':6.3f')  # utils.py 里有
+    data_time = AverageMeter('DataTime', ':6.3f')
+    losses = AverageMeter('Loss', ':6.4f')
+    Acc = AverageMeter('Acc', ':6.4f')
     # TODO monitor teacher loss
     mode = "train" if model.training else "val"
     batch_per_epoch = len(data_loader)
     progress = ProgressMeter(
         batch_per_epoch,
-        [batch_time, data_time, losses],
+        [batch_time, data_time, losses, Acc],
         prefix=f"{mode} Epoch: [{epoch}]")
 
     end = time.perf_counter()
     metrics = []
-    print(f"fp 16 True or False ?? : {not no_fp16}")
+    # print(f"fp 16 True or False ?? : {not no_fp16}")
     # TODO: not recreate data_aug for each epoch...
     # data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=True).cuda()
     data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=True).to(device)
@@ -458,7 +462,8 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
 
             # measure accuracy and record loss_ 衡量准确度，记录loss
             if not np.isnan(loss_.item()):
-                losses.update(loss_.item())  # 这是个AverageMeter ！！！可以update
+                losses.update(loss_.item())
+                Acc.update(1. - loss_.item())# 这是个AverageMeter ！！！可以update
             else:
                 print("NaN in model loss!!")
 
@@ -473,6 +478,7 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
             scaler.update()
             optimizer.zero_grad()
             writer.add_scalar("lr", optimizer.param_groups[0]['lr'], global_step=epoch * batch_per_epoch + i)
+
         if scheduler is not None:
             scheduler.step()
 
@@ -480,7 +486,7 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
         batch_time.update(time.perf_counter() - end)  # 这是个AverageMeter!!
         end = time.perf_counter()
         # Display progress
-        progress.display(i)  # 这是个ProgressMeter !!!
+        progress.display(i+1)  # 这是个ProgressMeter !!!
 
     if not model.training:  # 这个应该从model里找！！
         save_metrics(epoch, metrics, swa, writer, epoch, False, save_folder)  # save_metrics函数在utils.py 可以找到
@@ -488,8 +494,10 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
 
     if mode == "train":  # 训练模式
         writer.add_scalar(f"SummaryLoss/train", losses.avg, epoch)  # 这些在Tensorboard 都可以看到！！
+        writer.add_scalar(f"SummaryAcc/train", 1. - losses.avg, epoch) # 在tensorboard加了一个关于accuracy的scaler
     else:  # validation模式
         writer.add_scalar(f"SummaryLoss/val", losses.avg, epoch)
+        writer.add_scalar(f"SummaryAcc/val", 1. - losses.avg, epoch)
 
     return losses.avg
 

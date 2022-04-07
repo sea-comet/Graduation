@@ -13,7 +13,7 @@ class DataAugmenter(nn.Module):  # 按batch进行数据增广
     """Performs random flip and rotation batch wise, and reverse it if needed.
     Works"""
 
-    # 实际训练的时候p=0.8, drop_channel是True,其它是False
+    # 实际训练的时候p=0.8, drop_channel是True, 其它是False !!!
     def __init__(self, p=0.5, noise_only=False, channel_shuffling=False, drop_channnel=False):
         super(DataAugmenter, self).__init__()
         self.p = p

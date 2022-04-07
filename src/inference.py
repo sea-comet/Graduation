@@ -139,7 +139,7 @@ def generate_segmentations(data_loaders, models, normalisations, args):
                     if args.tta:  # 如果需要进行test time augmentation:
                         # apply_simple_tta 函数在tta.py 文件里可以找到
                         pre_segs = apply_simple_tta(model, inputs, True) # 看tta.py文件！！
-                        model_preds.append(pre_segs)
+                        # model_preds.append(pre_segs)  # 这儿好像作者写错了，有bug
                     else: # deep supervision 时不需要tta
                         if model.deep_supervision:
                             pre_segs, _ = model(inputs)

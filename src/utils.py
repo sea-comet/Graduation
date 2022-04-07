@@ -190,8 +190,9 @@ def calculate_metrics(preds, targets, patient, tta=False):   # 在generate_segme
         metrics[DICE] = dice
         metrics[SENS] = sens
         metrics[SPEC] = spec
-        print("metrics: ")
-        pp.pprint(metrics)
+        # 注意这里有打印每个病人metrics的地方！！！！！！！！！
+        # print("metrics: ")
+        # pp.pprint(metrics)
         metrics_list.append(metrics) # metrics_list 是一个含有3个metrics字典的list, 对ET,TC,WT各一个
 
     return metrics_list
@@ -237,7 +238,7 @@ def save_metrics(epoch, metrics, swa, writer, current_epoch, teacher=False, save
     ax.boxplot(metrics.values(), labels=metrics.keys())
     ax.set_ylim(0, 1) # 设置y轴数值的范围
     writer.add_figure(f"val/plot", fig, global_step=epoch)
-    print(f"Epoch {current_epoch} :{'val' + '_teacher :' if teacher else 'Val :'}",
+    print(f"\nEpoch {current_epoch} :{'val' + '_teacher :' if teacher else 'Val :'}",
           [f"{key} : {np.nanmean(value)}" for key, value in metrics.items()])
     with open(f"{save_folder}/val{'_teacher' if teacher else ''}.txt", mode="a") as f:
         print(f"Epoch {current_epoch} :{'val' + '_teacher :' if teacher else 'Val :'}",   # 把结果存在了TXT文件里！！
