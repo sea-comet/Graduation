@@ -23,7 +23,7 @@ If you prefer not to hardcode this value, you can set them as variable environme
 Then, start training:
 
 ```bash
-python -m src.train --devices 0 --width 48 --arch EquiUnet
+python -m src.train --devices 0 --width 48 --arch Atten_Unet
 ```
 
 For more details on the available option:
