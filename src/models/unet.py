@@ -82,7 +82,7 @@ class Unet(nn.Module):
         down4 = self.downsample(down3)
         print("encoder 3 down shape: ", down4.shape)
         down4 = self.encoder4(down4)
-        print("encoder 4 down shape: ", down4.shape)
+        print("encoder 4 shape: ", down4.shape)
 
         bottom = self.bottom(down4)
         print("bottom shape: ", bottom.shape)
