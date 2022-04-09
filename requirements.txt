@@ -1,5 +1,5 @@
 torch>=1.6.0.dev20200518+cu92
-SimpleITK>=1.2.4
+SimpleITK==1.2.4
 numpy>=1.18.4
 scikit-learn>=0.23.1
 pandas>=1.0.3
