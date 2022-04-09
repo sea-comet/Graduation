@@ -14,7 +14,7 @@ def determinist_collate(batch):
     return default_collate(batch)
 
 
-def pad_batch_to_max_shape(batch): # 没太看懂是干什么的，不会是给每个脑子按16步的步长切好多块吧？？
+def pad_batch_to_max_shape(batch): # 没太看懂是干什么的，不会是给每个脑子按16步的步长切好多块吧？？# 这个在train.py中给validation使用
     shapes = (sample['label'].shape for sample in batch)
     _, z_sizes, y_sizes, x_sizes = list(zip(*shapes))
     maxs = [int(max(z_sizes)), int(max(y_sizes)), int(max(x_sizes))]
@@ -37,7 +37,7 @@ def pad_batch_to_max_shape(batch): # 没太看懂是干什么的，不会是给�
     return batch
 
 
-def pad_batch1_to_compatible_size(batch):
+def pad_batch1_to_compatible_size(batch): # 这个给inference.py 中的pad使用，切出来的脑子很多都形状不规则，还好多单数！！
     print("pad过的batch shape: ", batch.shape)
     shape = batch.shape
     zyx = list(shape[-3:])

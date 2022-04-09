@@ -67,7 +67,7 @@ class Brats(Dataset):
             patient_label = patient_label[:, zmin:zmax, ymin:ymax, xmin:xmax]
             # default to 128, 128, 128　　　　＃　pad_or_crop_image函数在dataset下面的image_utils.py 里面有
             patient_image, patient_label = pad_or_crop_image(patient_image, patient_label, target_size=(128, 128, 128))
-        else:  # validation or testing,inference 好像有专门的数据预处理，所以不用先crop,而且validation时还得生成整个脑子的彩色图才行
+        else:  # validation or testing,inference 好像有专门的数据预处理 --> determinist_collate，所以不用先crop,而且validation时还得生成整个脑子的彩色图才行
             z_indexes, y_indexes, x_indexes = np.nonzero(np.sum(patient_image, axis=0) != 0)
             # Add 1 pixel in each side
             zmin, ymin, xmin = [max(0, int(np.min(arr) - 1)) for arr in (z_indexes, y_indexes, x_indexes)]
@@ -75,7 +75,7 @@ class Brats(Dataset):
             patient_image = patient_image[:, zmin:zmax, ymin:ymax, xmin:xmax]   #因为每个肿瘤的大小框都不一定一样，所以可能很多要pad！
             patient_label = patient_label[:, zmin:zmax, ymin:ymax, xmin:xmax]
         patient_image, patient_label = patient_image.astype("float16"), patient_label.astype("bool")
-        patient_image, patient_label = [torch.from_numpy(x) for x in [patient_image, patient_label]]
+        patient_image, patient_label = [torch.from_numpy(x) for x in [patient_image, patient_label]] # 这儿先没切成128，128，128
 
         return dict(patient_id=_patient["id"],
                     image=patient_image, label=patient_label,
@@ -120,7 +120,7 @@ def get_datasets(seed, debug, no_seg=False, on="train", full=False,
     train_dataset = Brats(train, training=True,  debug=debug,
                           normalisation=normalisation)
     val_dataset = Brats(val, training=False, data_aug=False,  debug=debug,
-                        normalisation=normalisation)
+                        normalisation=normalisation)         # 记住这儿training设置的是False,说明一开始data没有切成128，128，128
     bench_dataset = Brats(val, training=False, benchmarking=True, debug=debug,  # 这个benchmark 到底是个什么玩意儿？
                           normalisation=normalisation)                          # 就标了一个benchmarking 的flag 啥也没干！
     return train_dataset, val_dataset, bench_dataset

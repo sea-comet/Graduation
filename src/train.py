@@ -417,6 +417,8 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
     # TODO: not recreate data_aug for each epoch...
     # data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=True).cuda()
     # data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=True).to(device)
+    # 这个Augmentation就很奇怪，是在step里根据每个脑子生成一个随机数来决定要不要augment的，后面可以改成按dataset来弄
+    # 这里暂时改成drop channel 是False了
     data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=False).to(device)
     # DataAugmenter 在models下面的 augmentation_blocks.py 里面
 

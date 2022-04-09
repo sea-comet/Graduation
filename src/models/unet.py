@@ -68,44 +68,44 @@ class Unet(nn.Module):
 
     def forward(self, x):
 
-        print("x shape: ",x.shape)
+        # print("x shape: ",x.shape) # 打印结构看一看
         down1 = self.encoder1(x)
-        print("encoder 1 shape: ",down1.shape)
+        # print("encoder 1 shape: ",down1.shape)
         down2 = self.downsample(down1)
-        print("encoder 1 down shape: ", down2.shape)
+        # print("encoder 1 down shape: ", down2.shape)
         down2 = self.encoder2(down2)
-        print("encoder 2 shape: ", down2.shape)
+        # print("encoder 2 shape: ", down2.shape)
         down3 = self.downsample(down2)
-        print("encoder 2 down shape: ", down3.shape)
+        # print("encoder 2 down shape: ", down3.shape)
         down3 = self.encoder3(down3)
-        print("encoder 3 shape: ", down3.shape)
+        # print("encoder 3 shape: ", down3.shape)
         down4 = self.downsample(down3)
-        print("encoder 3 down shape: ", down4.shape)
+        # print("encoder 3 down shape: ", down4.shape)
         down4 = self.encoder4(down4)
-        print("encoder 4 shape: ", down4.shape)
+        # print("encoder 4 shape: ", down4.shape)
 
         bottom = self.bottom(down4)
-        print("bottom shape: ", bottom.shape)
+        # print("bottom shape: ", bottom.shape)
         bottom_2 = self.bottom_2(torch.cat([down4, bottom], dim=1))  # 384*2 --> 192
-        print("bottom_2 shape: ", bottom_2.shape)
+        # print("bottom_2 shape: ", bottom_2.shape)
 
         # Decoder
 
         up3 = self.upsample(bottom_2)
-        print("before decoder 3 upsample shape: ", up3.shape)
+        # print("before decoder 3 upsample shape: ", up3.shape)
         up3 = self.decoder3(torch.cat([down3, up3], dim=1))
-        print("decoder 3 shape: ", up3.shape)
+        # print("decoder 3 shape: ", up3.shape)
         up2 = self.upsample(up3)
-        print("before decoder 2 upsample shape: ", up2.shape)
+        # print("before decoder 2 upsample shape: ", up2.shape)
         up2 = self.decoder2(torch.cat([down2, up2], dim=1))
-        print("decoder 2 shape: ", up2.shape)
+        # print("decoder 2 shape: ", up2.shape)
         up1 = self.upsample(up2)
-        print("before decoder 1 upsample shape:: ", up1.shape)
+        # print("before decoder 1 upsample shape:: ", up1.shape)
         up1 = self.decoder1(torch.cat([down1, up1], dim=1))
-        print("decoder 1 shape: ", up1.shape)
+        # print("decoder 1 shape: ", up1.shape)
 
         out = self.outconv(up1)
-        print("output shape: ", out.shape)
+        # print("output shape: ", out.shape)
 
         if self.deep_supervision:  # 如果有深度监督，就返回两个东西
             deeps = []
