@@ -11,7 +11,7 @@ pip install -r requirements.txt
 
 # Training
 
-First change your data folder by modifying values in `src/config.py` `BRATS_TRAIN_FOLDERS` is for 5-fold training and validation, which use dataset with ground truth labels seg.nii. `BRATS_VAL_FOLDER` is for testing, which use dataset with no labels. Datasets come from BraTS2020.
+First change your data folder by modifying values in `src/config.py` `BRATS_TRAIN_FOLDERS` is for 5-fold training and validation, which use dataset with ground truth labels seg.nii. `BRATS_VAL_FOLDER` is for testing, which use dataset with no labels. Both Datasets come from BraTS2020.
 
 ```python
 # Used for 5 fold-Training and Validation
@@ -36,7 +36,7 @@ Note that this the batch size should be remain at 1, for data augmentation is do
 After training, you will have a `runs` folder created containing a directory for each run you have done.
 
 For each run, a yaml file with the option used for the runs, and 
-a `segs` folder containing the generated .nii.gz segmentations for the validation fold used.
+a `segs` folder containing the generated .nii.gz segmentations for the validation folder used.
 
 ```
 - src
@@ -49,7 +49,7 @@ a `segs` folder containing the generated .nii.gz segmentations for the validatio
             patients_indiv_perf.csv # a log of training patient segmentation performance
             events.out.. # Tensorboard log
 ```
-Drag the segmentation result in .nii.gz file in fold 'seg' into the software ITK-Snap, along with the orginal nii.gz file from any of the four modalities t1, t1ce, t2, flair, then the segmentation result on the brain can be visualized.
+Drag the segmentation result in .nii.gz file in folder 'seg' into the software ITK-Snap, along with the orginal nii.gz file from any of the four modalities t1, t1ce, t2, flair, then the segmentation result on the brain can be visualized.
 
 The yaml file is required to perform inference on the validation and train set
 
