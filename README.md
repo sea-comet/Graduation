@@ -6,7 +6,7 @@
 
 I also prepared colab notebooks that allow you to run the algorithm on Google Colab. Upload the file to Google Colab and then start running
 
-* The path to Google Colab file: [Graduation_Google Colab notebook](https://github.com/sea-comet/Graduation/blob/master/Graduation_Google%20Colab.ipynb) 
+* runnning on Google Colab: [Graduation_Google Colab notebook](https://github.com/sea-comet/Graduation/blob/master/Graduation_Google%20Colab.ipynb) 
 # Installation
 
 ```bash
