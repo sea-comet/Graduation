@@ -41,13 +41,13 @@ a `segs` folder containing the generated .nii.gz segmentations for the validatio
 ```
 - src
     - runs
-        - 20201127_34335135__fold_etc
-            202020201127_34335135__fold_etc.ymal
+        - 20220407_154427__fold0_etc 
+            20220407_154427__fold0_etc.ymal
             - segs
             model.txt # the printed model
             model_best.pth.tar # model weights
             patients_indiv_perf.csv # a log of training patient segmentation performance
-            events.out.. # Tensorboard log
+            events.out.. # Tensorboard log file
 ```
 Drag the segmentation result in .nii.gz file in folder 'seg' into the software ITK-Snap, along with the orginal nii.gz file from any of the four modalities t1, t1ce, t2, flair, then the segmentation result on the brain can be visualized.
 
