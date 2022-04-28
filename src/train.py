@@ -107,23 +107,16 @@ def main(args):
     # Create model
     print(f"Creating {args.arch} model...\n")
 
-    model_maker = getattr(models, args.arch)  # 大概意思就是获取Unet,  EquiUnet 或者 Att_EquiUnet
+    model_maker = getattr(models, args.arch)  # 大概意思就是获取Unet, 或 Atten_Unet
 
     model = model_maker(
-        4, 3,  # 问？？这个4，3 是干什么的？？？？？
+        4, 3,  # inplanes: 4 代表4个modality 相当于channels,  num_class: 3 代表ET, TC, WT
         width=args.width,
         norm_layer=get_norm_layer(args.norm_layer), dropout=args.dropout)  # get_norm_layer函数在model下面的 layers.py里
 
-    print(f"total number of trainable parameters {count_parameters(model)}\n")  # count_parameters 函数在utils.py里面
+    model = model.to(device)
 
-
-    if ngpus > 1:  # 其实这里用不着多GPU 训练
-        # model = torch.nn.DataParallel(model).cuda()
-        model = torch.nn.DataParallel(model).to(device)
-    else:
-        # model = model.cuda()
-        model = model.to(device)
-    # print("Model info: ", model)  # 这里有个打印 model ！！ 可以先不要！！！打出来乱七八糟的！！
+    # print("Model info: ", model)  # 打印 model 信息，layer信息
     model_file = args.save_folder / "model.txt"  # 在runs 目录下面
     with model_file.open("w") as f:
         print(model, file=f)
@@ -132,7 +125,6 @@ def main(args):
     criterion = EDiceLoss().to(device)  # 这个是用来弄loss的 # EDiceLoss 和 metric 函数在loss下面的dice.py 里面
     metric = criterion.metric  # 这个是用来衡量结果的
 
-    rangered = False  # needed because LR scheduling scheme is different for this optimizer
     if args.optim == "adam":
         optimizer = torch.optim.Adam(model.parameters(),
                                      lr=args.lr,
@@ -266,13 +258,9 @@ def main(args):
                 ts = time.perf_counter()
                 print(f"Val epoch done in {ts - te} s\n")
 
-            if not rangered:  # 没使用rangered
-                scheduler.step()
-                print("scheduler stepped!")
-            else:
-                if epoch / args.epochs > 0.5:
-                    scheduler.step()
-                    print("scheduler stepped!")
+            scheduler.step()
+            print("scheduler stepped!")
+
 
         except KeyboardInterrupt:
             print("Stopping training loop, doing benchmark")  # ?????????干啥的？？？

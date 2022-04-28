@@ -26,7 +26,7 @@ def pad_or_crop_image(image, seg=None, target_size=(128, 144, 144)):
     return image
 
 
-def get_left_right_idx_should_pad(target_size, dim):
+def get_left_right_idx_should_pad(target_size, dim):  # tick
     if dim >= target_size:
         return [False]
     elif dim < target_size:
@@ -36,7 +36,7 @@ def get_left_right_idx_should_pad(target_size, dim):
         return True, left, right
 
 
-def get_crop_slice(target_size, dim): #切割脑子
+def get_crop_slice(target_size, dim): #切割脑子 # tick
     if dim > target_size:
         crop_extent = dim - target_size
         left = random.randint(0, crop_extent)
@@ -46,7 +46,7 @@ def get_crop_slice(target_size, dim): #切割脑子
         return slice(0, dim)
 
 
-def normalize(image):
+def normalize(image): # tick
     """Basic min max scaler.
     """
     min_ = np.min(image)
@@ -54,6 +54,7 @@ def normalize(image):
     scale = max_ - min_
     image = (image - min_) / scale
     return image
+
 
 
 def irm_min_max_preprocess(image, low_perc=1, high_perc=99): # perc就是percentage的意思. 用最大值和最小值来normalize
@@ -79,54 +80,4 @@ def zscore_normalise(img: np.ndarray) -> np.ndarray:  # 用均值和标准差来
     return img
 
 
-def remove_unwanted_background(image, threshold=1e-5):
-    """Use to crop zero_value pixel from MRI image.
-    """
-    dim = len(image.shape)
-    non_zero_idx = np.nonzero(image > threshold)
-    min_idx = [np.min(idx) for idx in non_zero_idx]
-    # +1 because slicing is like range: not inclusive!!
-    max_idx = [np.max(idx) + 1 for idx in non_zero_idx]
-    bbox = tuple(slice(_min, _max) for _min, _max in zip(min_idx, max_idx))
-    return image[bbox]
 
-
-def random_crop2d(*images, min_perc=0.5, max_perc=1.):
-    """Crop randomly but identically all images given.
-
-    Could be used to pass both mask and image at the same time. Anything else will
-    throw.
-
-    Warnings
-    --------
-    Only works for channel first images. (No channel image will not work).
-    """
-    if len(set(tuple(image.shape) for image in images)) > 1:
-        raise ValueError("Image shapes do not match")
-    shape = images[0].shape
-    new_sizes = [int(dim * random.uniform(min_perc, max_perc)) for dim in shape]
-    min_idx = [random.randint(0, ax_size - size) for ax_size, size in zip(shape, new_sizes)]
-    max_idx = [min_id + size for min_id, size in zip(min_idx, new_sizes)]
-    bbox = list(slice(min_, max(max_, 1)) for min_, max_ in zip(min_idx, max_idx))
-    # DO not crop channel axis...
-    bbox[0] = slice(0, shape[0])
-    # prevent warning
-    bbox = tuple(bbox)
-    cropped_images = [image[bbox] for image in images]
-    if len(cropped_images) == 1:
-        return cropped_images[0]
-    else:
-        return cropped_images
-
-
-def random_crop3d(*images, min_perc=0.5, max_perc=1.):
-    """Crop randomly but identically all images given.
-
-    Could be used to pass both mask and image at the same time. Anything else will
-    throw.
-
-    Warnings
-    --------
-    Only works for channel first images. (No channel image will not work).
-    """
-    return random_crop2d(min_perc, max_perc, *images)

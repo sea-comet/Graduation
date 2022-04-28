@@ -29,7 +29,7 @@ parser.add_argument('--config', default='', type=str, metavar='PATH',
 parser.add_argument('--devices', required=True, type=str,
                     help='Set the CUDA_VISIBLE_DEVICES env var from this string')
 # default: test
-parser.add_argument('--mode', default="test", choices=["val","test"])
+parser.add_argument('--mode', default="val", choices=["val","test"])
 parser.add_argument('--seed', default=16111990)
 
 

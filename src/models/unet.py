@@ -6,7 +6,8 @@ from src.models.layers import ConvBnRelu, UBlock, conv1x1, UBlockCbam, CBAM
 
 
 class Unet(nn.Module):
-    """Almost the most basic U-net.
+    """
+        The most basic U-net with slight changes
     """
     name = "Unet"
 
@@ -17,12 +18,12 @@ class Unet(nn.Module):
         features = [width * 2 ** i for i in range(4)]  # [48,96,192,384]
         print("features: ", features)
 
-        # UBlock 在layers.py里面 它跟图上有些不同就是因为它中间的都除了2 ！！！！！！试试把除以2去掉！！
+        # UBlock 在layers.py里面 前,中，后features数量见后面
         self.encoder1 = UBlock(inplanes, features[0] // 2, features[0], norm_layer, dropout=dropout)  # 4，24，48
         self.encoder2 = UBlock(features[0], features[1] // 2, features[1], norm_layer, dropout=dropout)  # 48，48，96
         self.encoder3 = UBlock(features[1], features[2] // 2, features[2], norm_layer, dropout=dropout)  # 96，96，192
         self.encoder4 = UBlock(features[2], features[3] // 2, features[3], norm_layer, dropout=dropout)  # 192，192，384
-        #  注意bottom这里有dilation: (2,2)
+        #  bottom这里有dilation: (2,2)
         self.bottom = UBlock(features[3], features[3], features[3], norm_layer, (2, 2), dropout=dropout)  # 384，384，384
 
         self.bottom_2 = ConvBnRelu(features[3] * 2, features[2], norm_layer, dropout=dropout)  # 384*2,192
@@ -50,7 +51,7 @@ class Unet(nn.Module):
 
     def forward(self, x):
 
-        # print("x shape: ",x.shape) # 打印结构看一看
+        # print("x shape: ",x.shape)
         down1 = self.encoder1(x)
         # print("encoder 1 shape: ",down1.shape)
         down2 = self.downsample(down1)
@@ -93,17 +94,15 @@ class Unet(nn.Module):
 
 
 
-
-# 我改的这玩意儿！！！
-class Atten_Unet(Unet):  # 继承的Unet，所以forward函数和Unet一样
+# My modification: Atten_Unet
+class Atten_Unet(Unet):  # 继承Unet，forward函数和Unet一样
     def __init__(self, inplanes, num_classes, width, norm_layer=None, dropout=0,
                  **kwargs):
         super(Unet, self).__init__()
         features = [width * 2 ** i for i in range(4)]
         print("model features: ", features)
 
-
-        # UBlockCbam 在layers.py 里面有！！这儿改了！！改成不是Equi的版本了！！
+         # UBlockCbam 在layers.py 里面 后面两个卷积输出不equivalent的版本
         self.encoder1 = UBlockCbam(inplanes, features[0] // 2, features[0], norm_layer, dropout=dropout)  # 4，24，48
         self.encoder2 = UBlockCbam(features[0], features[1] // 2, features[1], norm_layer, dropout=dropout)  # 48，48，96
         self.encoder3 = UBlockCbam(features[1], features[2] // 2, features[2], norm_layer, dropout=dropout)  # 96，96，192
@@ -118,7 +117,8 @@ class Atten_Unet(Unet):  # 继承的Unet，所以forward函数和Unet一样
         )
 
         self.downsample = nn.MaxPool3d(2, 2)
-        # 后面用的都是UBlock了
+
+        # decoder 用的都是UBlock了
         self.decoder3 = UBlock(features[2] * 2, features[2], features[1], norm_layer, dropout=dropout)
         self.decoder2 = UBlock(features[1] * 2, features[1], features[0], norm_layer, dropout=dropout)
         self.decoder1 = UBlock(features[0] * 2, features[0], features[0], norm_layer, dropout=dropout)

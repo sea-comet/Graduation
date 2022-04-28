@@ -10,10 +10,16 @@ import yaml
 from matplotlib import pyplot as plt
 from numpy import logical_and as l_and, logical_not as l_not
 from scipy.spatial.distance import directed_hausdorff
-from torch import distributed as dist
 from torch.cuda.amp import autocast
 
 from src.dataset.batch_utils import pad_batch1_to_compatible_size
+
+#  The names of all validation metrics
+SENS = "sens"
+SPEC = "spec"
+HAUSSDORF = "haussdorf"
+DICE = "dice"
+METRICS = [HAUSSDORF, DICE, SENS, SPEC]
 
 
 def save_args(args):  # 保存args设置，保存成yaml格式
@@ -28,24 +34,13 @@ def save_args(args):  # 保存args设置，保存成yaml格式
         yaml.dump(config, file)
 
 
-def master_do(func, *args, **kwargs):
-    """Help calling function only on the rank0 process id ddp"""
-    try:
-        rank = dist.get_rank()
-        if rank == 0:
-            return func(*args, **kwargs)
-    except AssertionError:
-        # not in DDP setting, just do as usual
-        func(*args, **kwargs)
-
-
 def save_checkpoint(state: dict, save_folder: pathlib.Path):  # 已看
     """Save Training state."""
     best_filename = f'{str(save_folder)}/model_best.pth.tar'
     torch.save(state, best_filename)
 
 
-class AverageMeter(object):  # 已看。更新数据，计算平均值
+class AverageMeter(object):  # 更新数据，重置数据, 计算平均值
     """Computes and stores the average and current value."""
 
     def __init__(self, name, fmt=':f'):
@@ -74,7 +69,7 @@ class AverageMeter(object):  # 已看。更新数据，计算平均值
         return fmtstr.format(**self.__dict__)
 
 
-class ProgressMeter(object):  # 已看，没太看懂干啥的
+class ProgressMeter(object):  # 展示输出
     def __init__(self, num_batches, meters, prefix=""):
         self.batch_fmtstr = self._get_batch_fmtstr(num_batches)
         self.meters = meters
@@ -93,7 +88,7 @@ class ProgressMeter(object):  # 已看，没太看懂干啥的
 
 
 # TODO remove dependency to args
-def reload_ckpt(args, model, optimizer, scheduler):  # 已看
+def reload_ckpt(args, model, optimizer, scheduler):
     if os.path.isfile(args.resume):
         print("=> loading checkpoint '{}'".format(args.resume))
         checkpoint = torch.load(args.resume)
@@ -107,7 +102,7 @@ def reload_ckpt(args, model, optimizer, scheduler):  # 已看
         raise ValueError("=> no checkpoint found at '{}'".format(args.resume))
 
 
-def reload_ckpt_bis(ckpt, model, optimizer=None):  # 已看
+def reload_ckpt_bis(ckpt, model, optimizer=None):
     if os.path.isfile(ckpt):
         print(f"=> loading checkpoint {ckpt}")
         try:
@@ -130,7 +125,7 @@ def count_parameters(model):  # 计算model参数数量的函数
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
-def calculate_metrics(preds, targets, patient, tta=False):   # 在generate_segmentations函数里被调用了
+def calculate_metrics(preds, targets, patient):   # 在generate_segmentations函数里被调用了
     """
 
     Parameters
@@ -141,8 +136,6 @@ def calculate_metrics(preds, targets, patient, tta=False):   # 在generate_segme
         torch tensor of same shape
     patient :
         The patient ID
-    tta:
-        is tta performed for this run, TTA: test time augmentation, 即 测试时间的增广
     """
     pp = pprint.PrettyPrinter(indent=4)
     assert preds.shape == targets.shape, "Preds and targets do not have the same size"
@@ -155,7 +148,6 @@ def calculate_metrics(preds, targets, patient, tta=False):   # 在generate_segme
         metrics = dict(
             patient_id=patient,
             label=label,
-            tta=tta,
         )
 
         if np.sum(targets[i]) == 0:  # targets[i]取ET,TC,WT 中的某一个map, 真实脑子里恰好没有这一类肿瘤，啥也没有！！
@@ -302,8 +294,4 @@ def update_teacher_parameters(model, teacher_model, global_step, alpha=0.99 / 0.
     # print("teacher updated!")
 
 
-HAUSSDORF = "haussdorf"
-DICE = "dice"
-SENS = "sens"
-SPEC = "spec"
-METRICS = [HAUSSDORF, DICE, SENS, SPEC]
+

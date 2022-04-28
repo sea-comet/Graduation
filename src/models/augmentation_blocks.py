@@ -1,10 +1,4 @@
-"""The strange way used to perform data augmentation during the Brats 2020 challenge...
-
-Be aware, any batch size above 1 could fail miserably (in an unpredicted way).
-"""
-
 from random import randint, random, sample, uniform
-
 import torch
 from torch import nn
 
@@ -56,12 +50,6 @@ class DataAugmenter(nn.Module):  # 按batch进行数据增广
     def reverse(self, x): # 好像又给transpose和flip回去了--> 因为算loss对比的时候需要把它再转置旋转回去！！
         if self.toggle:
             self.toggle = not self.toggle # 如果toggle是True,就设置成False,现在是False
-            if isinstance(x, list):  # case of deep supervision # 这是啥意思？？？用于深度监督？？？？
-                seg, deeps = x # 这啥玩意儿？？拆开的是啥？？？see！！
-                reversed_seg = seg.flip(self.flip).transpose(*self.transpose)
-                reversed_deep = [deep.flip(self.flip).transpose(*self.transpose) for deep in deeps]
-                return reversed_seg, reversed_deep
-            else:
-                return x.flip(self.flip).transpose(*self.transpose)
+            return x.flip(self.flip).transpose(*self.transpose)
         else:
             return x
