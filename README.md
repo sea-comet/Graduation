@@ -9,7 +9,7 @@ I also prepared colab notebooks that allow you to run the algorithm on Google Co
 * runnning on Google Colab: [Graduation_Google Colab notebook](https://github.com/sea-comet/Graduation/blob/master/Graduation_Google%20Colab.ipynb) 
 # Installation
 
-```bash
+```python
 pip install -r requirements.txt
 ```
 
@@ -28,12 +28,12 @@ BRATS_VAL_FOLDER = "your-Path_to/BraTS2020_ValidationData/MICCAI_BraTS_2020_Data
 
 Then, start training:
 
-```bash
+```python
 python -m src.train --width 48 --arch Atten_Unet --epochs 150 --optim adam # Use Atten_Unet
 ```
 
 There are other parameters that can be changed. More details on the available options for train.py:
-```bash
+```python
 python -m src.train -h
 ```
 
@@ -63,12 +63,12 @@ After training, you will have a `runs` folder created containing a directory for
 * The yaml file is required to perform inference on testing dataset 
 * The script to perform testing is `test.py` !!  You should change the path to the yaml file yourself!!
 
-```bash
+```python
 python -m src.test --config "/content/Graduation/runs/×××××.yaml" --devices 0 --mode val 
 
 ```
 For other options:
-```
+```python
 python -m src.test -h 
 ```
 
