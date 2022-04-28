@@ -1,7 +1,8 @@
-# Brain tumor segmentation
+# Brain tumor segmentation for Graduation -- Dong Wanqi 
 # Environment 
-Linux platform with GPU
-Code can be run on Google Colab
+Linux platform with GPU. Code can be run on Google Colab
+# Fast running on Google Colab
+
 # Installation
 
 ```bash
@@ -14,9 +15,9 @@ First change your data folder by modifying values in `src/config.py`
 
 ```python
 # Used for 5 fold-Training and Validation
-BRATS_TRAIN_FOLDERS = "your-Path_to/brats2020/MICCAI_BraTS_2020_Data_Training"
+BRATS_TRAIN_FOLDERS = "your-Path_to/BraTS2020_TrainingData/MICCAI_BraTS_2020_Data_Training"
 # Used for Testing
-BRATS_VAL_FOLDER = "your-Path_to/brats2020/MICCAI_BraTS_2020_Data_Valdation"
+BRATS_VAL_FOLDER = "your-Path_to/BraTS2020_ValidationData/MICCAI_BraTS_2020_Data_Valdation"
 ```
 
 Then, start training:
@@ -54,15 +55,17 @@ The yaml file is required to perform inference on the validation and train set
 
 # Testing
 
-The script to perform testing is... `test.py` !!
+The script to perform testing is... `test.py` !!  You should change the path to the yaml file yourself!!
 
-```
-python -m src.inference -h 
-usage: inference.py [-h] [--config PATH [PATH ...]] --devices DEVICES
-                    [--on {val,train,test}] [--tta] [--seed SEED]
-
-Brats testing dataset inference # you should change the path to the yaml file yourself!!
 ```bash
 !python -m src.test --config "/content/Graduation/runs/×××××.yaml" --devices 0 --mode val 
+
 ```
+For other options:
+```
+python -m src.test -h 
+```
+
+
+
 
