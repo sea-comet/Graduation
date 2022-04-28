@@ -1,24 +1,14 @@
 from collections import OrderedDict
 
 import torch
-from torch import nn, nn as nn
+from torch import nn
 from torch.nn import functional as F
 
 
-def default_norm_layer(planes, groups=16):
-    groups_ = min(groups, planes)
-    if planes % groups_ > 0:
-        divisor = 16
-        while planes % divisor > 0:
-            divisor /= 2
-        groups_ = int(planes // divisor)
-    return nn.GroupNorm(groups_, planes)  # 记得看看group_norm 是什么，注意论文中的8，16
-
-
-def get_norm_layer(norm_type="group"):  # 默认的norm_type 就是group
+def get_norm_layer(norm_type="group"):  # 默认的norm_type: 何恺明的 group normalization
     if "group" in norm_type:
         try:
-            grp_nb = int(norm_type.replace("group", ""))   # 下面一行的planes是哪儿来的？？？
+            grp_nb = int(norm_type.replace("group", ""))
             return lambda planes: default_norm_layer(planes, groups=grp_nb)  # default_norm_layer 函数在上面
         except ValueError as e:
             print(e)
@@ -29,14 +19,24 @@ def get_norm_layer(norm_type="group"):  # 默认的norm_type 就是group
     else:       # 如果不是group也不是None,就用下面的默认的InstanceNorm3d
         return lambda x: nn.InstanceNorm3d(x, affine=True)
 
+def default_norm_layer(planes, groups=16):
+    groups_ = min(groups, planes)
+    if planes % groups_ > 0:
+        divisor = 16
+        while planes % divisor > 0:
+            divisor /= 2
+        groups_ = int(planes // divisor)
+    return nn.GroupNorm(groups_, planes)
+
+
 
 def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1, bias=False):  # kernel_size 是3的卷积！！
     """3x3 convolution with padding"""
     return nn.Conv3d(in_planes, out_planes, kernel_size=3, stride=stride,
-                     padding=dilation, groups=groups, bias=bias, dilation=dilation)  # groups 是什么意思？？
+                     padding=dilation, groups=groups, bias=bias, dilation=dilation)  # group
 
 
-def conv1x1(in_planes, out_planes, stride=1, bias=True):  # 已看
+def conv1x1(in_planes, out_planes, stride=1, bias=True): # 1*1 卷积
     """1x1 convolution"""
     return nn.Conv3d(in_planes, out_planes, kernel_size=1, stride=stride, bias=bias)
 
@@ -45,11 +45,11 @@ class ConvBnRelu(nn.Sequential):
 
     def __init__(self, inplanes, planes, norm_layer=None, dilation=1, dropout=0):
         if norm_layer is not None:
-            super(ConvBnRelu, self).__init__(  # 传进去的是个字典！！
+            super(ConvBnRelu, self).__init__(  # 传进去字典
                 OrderedDict(
-                    [           # conv3x3 在上面 ！！！
+                    [           # conv3x3 在上面
                         ('conv', conv3x3(inplanes, planes, dilation=dilation)),
-                        ('bn', norm_layer(planes)),  # norm_layer 是传进来的参数！！
+                        ('bn', norm_layer(planes)),  # norm_layer 是传进来的
                         ('relu', nn.ReLU(inplace=True)),
                         ('dropout', nn.Dropout(p=dropout)),
                     ]
@@ -58,7 +58,7 @@ class ConvBnRelu(nn.Sequential):
         else:
             super(ConvBnRelu, self).__init__(
                 OrderedDict(
-                    [                                                       # 记住这里多了一个bias = True!!
+                    [
                         ('conv', conv3x3(inplanes, planes, dilation=dilation, bias=True)),
                         ('relu', nn.ReLU(inplace=True)),
                         ('dropout', nn.Dropout(p=dropout)),
@@ -68,20 +68,21 @@ class ConvBnRelu(nn.Sequential):
 
 
 class UBlock(nn.Sequential):
-    """Unet mainstream downblock. # Unet encoder 下降和上升用的block
+    """
+       Unet mainstream downblock. # Unet encoder 基础block
     """
 
     def __init__(self, inplanes, midplanes, outplanes, norm_layer, dilation=(1, 1), dropout=0):
         super(UBlock, self).__init__(  # init 传进去的是一个字典
             OrderedDict(
-                [                   # ConvBnRelu 在上面！！！
+                [                   # ConvBnRelu 在上面
                     ('ConvBnRelu1', ConvBnRelu(inplanes, midplanes, norm_layer, dilation=dilation[0], dropout=dropout)),
                     ('ConvBnRelu2',ConvBnRelu(midplanes, outplanes, norm_layer, dilation=dilation[1], dropout=dropout)),
                 ])
         )
 
 
-class UBlockCbam(nn.Sequential):  # 在Att_EquiUnet中用的Block, 这个跟UBlock（2个卷积层）相比多了一个CBAM层
+class UBlockCbam(nn.Sequential):  # 在AttUnet中用的Block, 这个跟UBlock（2个卷积层）相比多了一个CBAM层
     def __init__(self, inplanes, midplanes, outplanes, norm_layer, dilation=(1, 1), dropout=0):
         super(UBlockCbam, self).__init__(
             OrderedDict(
@@ -91,13 +92,6 @@ class UBlockCbam(nn.Sequential):  # 在Att_EquiUnet中用的Block, 这个跟UBlo
                 ])
         )
 
-
-def count_parameters(model):
-    return sum(p.numel() for p in model.parameters() if p.requires_grad)
-
-
-if __name__ == '__main__':
-    print(UBlock(4, 4))
 
 
 class BasicConv(nn.Module):  # 传进去的in_planes=2，out_planes=1
@@ -118,6 +112,26 @@ class BasicConv(nn.Module):  # 传进去的in_planes=2，out_planes=1
         return x
 
 
+'''
+    CBAM module
+    Including Spatial_Attention & Channel_Attention module.
+    
+'''
+
+class CBAM(nn.Module):  # 一个ChannelGate加一个SpatialGate, gate_channels的接收维度就是UBlock的输出维度
+    def __init__(self, gate_channels, reduction_ratio=16, pool_types=None, norm_layer=None):
+        super(CBAM, self).__init__()
+        if pool_types is None:
+            pool_types = ['avg', 'max']                 # reduction_ratio是16
+        self.ChannelGate = ChannelGate(gate_channels, reduction_ratio, pool_types)  # pool_types 是 'avg'或'max'
+        self.SpatialGate = SpatialGate(norm_layer)
+
+    def forward(self, x):
+        x_out = self.ChannelGate(x)
+        x_out = self.SpatialGate(x_out)
+        return x_out
+
+
 class Flatten(nn.Module):
     def forward(self, x):
         return x.view(x.size(0), -1)
@@ -128,17 +142,17 @@ class ChannelGate(nn.Module):
         super(ChannelGate, self).__init__()
         self.gate_channels = gate_channels
         self.mlp = nn.Sequential(    # MLP 是多层感知器: Multilayer Perceptron
-            Flatten(),    # 先展平  # 这里怎么回事？？没看懂？？不是展平了吗，那怎么传到后面用gate_channels的，维度不匹配啊？？
-            nn.Linear(gate_channels, gate_channels // reduction_ratio),   # 每个UBlock的输出维度 --> 除以16
+            Flatten(),    # 先展平
+            nn.Linear(gate_channels, gate_channels // reduction_ratio),  # 每个UBlock的输出维度 --> 除以16
             nn.ReLU(inplace=True),
-            nn.Linear(gate_channels // reduction_ratio, gate_channels)    # 再还原，除以16了的UBlock的输出维度 --> UBlock的输出维度
+            nn.Linear(gate_channels // reduction_ratio, gate_channels)  # 再还原，除以16了的UBlock的输出维度 --> UBlock的输出维度
         )
         self.pool_types = pool_types
 
-    def forward(self, x):   # 先avg_pool,mlp, 再max_pool,mlp
+    def forward(self, x):   # avg_pool,mlp, max_pool 共用 mlp
         channel_att_sum = None
         for pool_type in self.pool_types:
-            if pool_type == 'avg':  # 这里是怎么实现的？？没看懂？？
+            if pool_type == 'avg':
                 avg_pool = F.avg_pool3d(x, (x.size(2), x.size(3), x.size(4)), stride=(x.size(2), x.size(3), x.size(4)))
                 channel_att_raw = self.mlp(avg_pool)
             elif pool_type == 'max':
@@ -148,7 +162,7 @@ class ChannelGate(nn.Module):
                 channel_att_sum = channel_att_raw  # 就是这个
             else:
                 channel_att_sum = channel_att_sum + channel_att_raw
-        # 这就很奇怪，是干啥的啊？？自己乘变形的自己吗？？
+
         scale = torch.sigmoid(channel_att_sum).unsqueeze(2).unsqueeze(3).unsqueeze(4).expand_as(x)
         return x * scale
 
@@ -172,15 +186,5 @@ class SpatialGate(nn.Module):
         return x * scale  # 广播机制
 
 
-class CBAM(nn.Module):  # 一个ChannelGate加一个SpatialGate, gate_channels的接收维度就是UBlock的输出维度
-    def __init__(self, gate_channels, reduction_ratio=16, pool_types=None, norm_layer=None):
-        super(CBAM, self).__init__()
-        if pool_types is None:
-            pool_types = ['avg', 'max']                 # reduction_ratio是16
-        self.ChannelGate = ChannelGate(gate_channels, reduction_ratio, pool_types)  # pool_types 是 'avg'或'max'
-        self.SpatialGate = SpatialGate(norm_layer)
-
-    def forward(self, x):
-        x_out = self.ChannelGate(x)
-        x_out = self.SpatialGate(x_out)
-        return x_out
+if __name__ == '__main__':
+    print(UBlock(4, 4))

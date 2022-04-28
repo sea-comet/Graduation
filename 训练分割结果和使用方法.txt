@@ -1,0 +1,17 @@
+
+使用方法和简介请看 Github 中 README.md 文件
+https://github.com/sea-comet/Graduation/blob/master/README.md
+
+Github 代码地址
+https://github.com/sea-comet/Graduation/tree/master
+
+毕设训练结果及分割结果，见百度网盘
+链接: https://pan.baidu.com/s/1k_6mCowWd16sU8yR2jxQpw 提取码: dg8v 
+
+文件名：毕设训练结果.zip 
+主要看
+“3 run_Atten Unet_drop 0.2_noise (0.9,1.1)_150 epoch” 
+“3 pred_Atten Unet_drop 0.2_noise (0.9,1.1)_150 epoch”
+“3 Tensorboard 图像”
+这3个文件夹中的结果，此为最终版本
+其它为部分对比实验结果
