@@ -64,7 +64,7 @@ After training, you will have a `runs` folder created containing a directory for
 * The script to perform testing is `test.py` !!  You should change the path to the yaml file yourself!!
 
 ```bash
-!python -m src.test --config "/content/Graduation/runs/×××××.yaml" --devices 0 --mode val 
+python -m src.test --config "/content/Graduation/runs/×××××.yaml" --devices 0 --mode val 
 
 ```
 For other options:
