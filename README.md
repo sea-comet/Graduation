@@ -72,13 +72,13 @@ For other options:
 python -m src.test -h 
 ```
 
-# 毕设训练结果 ---> Can be found in the link below
+# 毕设训练结果.zip ---> Can be found in the link below
 
 * 链接: [百度网盘](https://pan.baidu.com/s/1k_6mCowWd16sU8yR2jxQpw)
 * `提取码: dg8v `
 
 # Model 
-## Model used in this project: Atten_Unet. It is a varient from 3D-Unet + CBAM block
+## Model proposed in this project: Atten_Unet. It is a varient from 3D-Unet + CBAM block
 ![image](https://github.com/sea-comet/Graduation/blob/master/images/model.png)
 
 # Results
