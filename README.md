@@ -12,6 +12,16 @@ I also prepared colab notebooks that allow you to run the algorithm on Google Co
 ```bash
 pip install -r requirements.txt
 ```
+# Model 
+Model used in this project: Atten_Unet. It is varient from 3D-Unet + CBAM block
+![image](https://github.com/sea-comet/Graduation/blob/master/images/model.png)
+
+# Results
+For segmentation result. Here is the comparison between The predicted segmentation result and the ground truth labels for patient 9
+predicted segmentation result
+![image](https://github.com/sea-comet/Graduation/blob/master/images/patient%209_Pred%20seg.png)
+ground truth labels
+![image](https://github.com/sea-comet/Graduation/blob/master/images/patient%209_Ground%20truth.png)
 
 # Training
 
@@ -71,7 +81,5 @@ For other options:
 ```
 python -m src.test -h 
 ```
-
-
 
 
