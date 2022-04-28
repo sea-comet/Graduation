@@ -41,7 +41,7 @@ Note that this the batch size should be set to 1, for data augmentation is done 
 
 After training, you will have a `runs` folder created containing a directory for each run you have done.
 
-* For each run, a yaml file with the option used for the runs
+* For each run, a yaml file with the option used for the runs will be generated
 * A `segs` folder containing the generated .nii.gz files. These are the segmentation results.
 * Drag the segmentation result in .nii.gz file in folder 'seg' into the software ITK-Snap, along with the orginal nii.gz file from any of the four modalities t1, t1ce, t2, flair, then the segmentation result on the brain can be visualized.
 
