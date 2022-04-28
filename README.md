@@ -72,7 +72,7 @@ For other options:
 python -m src.test -h 
 ```
 # Model 
-## Model used in this project: Atten_Unet. It is varient from 3D-Unet + CBAM block
+## Model used in this project: Atten_Unet. It is a varient from 3D-Unet + CBAM block
 ![image](https://github.com/sea-comet/Graduation/blob/master/images/model.png)
 
 # Results
