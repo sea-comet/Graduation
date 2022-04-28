@@ -1,9 +1,9 @@
 import argparse
 import time
 import pathlib
+from datetime import datetime
 import pandas as pd
 import numpy as np
-from datetime import datetime
 
 import torch
 import torch.optim
@@ -132,7 +132,7 @@ def main(args):
     criterion = EDiceLoss().to(device)  # 这个是用来弄loss的 # EDiceLoss 和 metric 函数在loss下面的dice.py 里面
     metric = criterion.metric  # 这个是用来衡量结果的
 
-
+    rangered = False  # needed because LR scheduling scheme is different for this optimizer
     if args.optim == "adam":
         optimizer = torch.optim.Adam(model.parameters(),
                                      lr=args.lr,
@@ -222,6 +222,7 @@ def main(args):
                                     epoch)  # validation_loss 比training_loss 大
 
 
+
     # 这里才开始了正式训练！！！！！！！！
     print("start training now!...")
 
@@ -265,9 +266,13 @@ def main(args):
                 ts = time.perf_counter()
                 print(f"Val epoch done in {ts - te} s\n")
 
-            scheduler.step()
-            print("scheduler stepped!")
-
+            if not rangered:  # 没使用rangered
+                scheduler.step()
+                print("scheduler stepped!")
+            else:
+                if epoch / args.epochs > 0.5:
+                    scheduler.step()
+                    print("scheduler stepped!")
 
         except KeyboardInterrupt:
             print("Stopping training loop, doing benchmark")  # ?????????干啥的？？？
@@ -315,10 +320,10 @@ def step(data_loader, model, criterion: EDiceLoss, metric, optimizer, epoch, wri
 
     # TODO: not recreate data_aug for each epoch...
     # data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=True).cuda()
-
-    # Augmentation 是在step里根据每个脑子生成一个随机数来决定要不要augment的，后面可以试试改成按dataset来弄，TODO
+    # data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=True).to(device)
+    # 这个Augmentation就很奇怪，是在step里根据每个脑子生成一个随机数来决定要不要augment的，后面可以改成按dataset来弄
     # 这里暂时改成drop channel 是False了
-    data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=True).to(device)
+    data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=False).to(device)
     # DataAugmenter 在models下面的 augmentation_blocks.py 里面
 
     for i, batch in enumerate(data_loader):
@@ -380,7 +385,7 @@ def step(data_loader, model, criterion: EDiceLoss, metric, optimizer, epoch, wri
         batch_time.update(time.perf_counter() - end)  # 这是个AverageMeter!!
         end = time.perf_counter()
         # Display progress
-        progress.display(i+1)  # ProgressMeter !!!
+        progress.display(i+1)  # 这是个ProgressMeter !!!
 
     if not model.training:  # 这个应该从model里找！！
         save_metrics(epoch, metrics, writer, epoch, False, save_folder)  # save_metrics函数在utils.py 可以找到
