@@ -29,7 +29,7 @@ BRATS_VAL_FOLDER = "your-Path_to/BraTS2020_ValidationData/MICCAI_BraTS_2020_Data
 Then, start training:
 
 ```bash
-!python -m src.train --width 48 --arch Atten_Unet --epochs 150 --optim adam # Use Atten_Unet
+python -m src.train --width 48 --arch Atten_Unet --epochs 150 --optim adam # Use Atten_Unet
 ```
 
 There are other parameters that can be changed. More details on the available options for train.py:
