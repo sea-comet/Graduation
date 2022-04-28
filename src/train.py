@@ -1,37 +1,37 @@
 import argparse
-import os
-import pathlib
 import time
+import pathlib
+import pandas as pd
+import numpy as np
 from datetime import datetime
 
-import numpy as np
-import pandas as pd
 import torch
-import torch.nn.parallel
 import torch.optim
 import torch.utils.data
-# from ranger import Ranger
-from torch.cuda.amp import autocast, GradScaler
+import torch.nn.parallel
 from torch.utils.tensorboard import SummaryWriter
+from torch.cuda.amp import autocast, GradScaler
 
-from src import models
 from src.dataset import get_datasets
 from src.dataset.batch_utils import determinist_collate  # 重分配
-from src.loss import EDiceLoss
+from src import models
 from src.models import get_norm_layer, DataAugmenter
-from src.utils import save_args, AverageMeter, ProgressMeter, reload_ckpt, save_checkpoint, reload_ckpt_bis, \
-    count_parameters, WeightSWA, save_metrics, generate_segmentations
+from src.loss import EDiceLoss
+
+from src.utils import AverageMeter, save_args, ProgressMeter, save_checkpoint, reload_ckpt, reload_ckpt_bis, \
+    count_parameters, save_metrics, generate_segmentations
+
 
 parser = argparse.ArgumentParser(description='Brats Training')
 parser.add_argument('-a', '--arch', metavar='ARCH', default='Atten_Unet',
-                    help='model architecture (default: Unet)')
+                    help='model architecture (default: Atten_Unet)')
 parser.add_argument('--width', default=48, help='base number of features for Unet (x2 per downsampling)', type=int)
 # DO not use data_aug argument this argument!!
 parser.add_argument('-j', '--workers', default=2, type=int, metavar='N',
                     help='number of data loading workers (default: 2).')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')  # 这个用在重新启动，200 epoch 后面训练的那150个epoch !!
-parser.add_argument('--epochs', default=100, type=int, metavar='N',
+parser.add_argument('--epochs', default=150, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('-b', '--batch-size', default=1, type=int,
                     metavar='N',
@@ -44,43 +44,33 @@ parser.add_argument('--wd', '--weight-decay', default=0., type=float,
 # Warning: untested option!!
 parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint. Warning: untested option')
-# parser.add_argument('--devices', required=True, type=str,
-#                     help='Set the CUDA_VISIBLE_DEVICES env var from this string')
+
 parser.add_argument('--debug', action="store_true")
-parser.add_argument('--deep_sup', action="store_true")  # 深度监督
-parser.add_argument('--no_fp16', action="store_true")
+
 parser.add_argument('--seed', default=16111990, help="seed for train/val split")
 parser.add_argument('--warm', default=3, type=int, help="number of warming up epochs")
 
 parser.add_argument('--val', default=3, type=int, help="how often to perform validation step")
 parser.add_argument('--fold', default=0, type=int, help="Split number (0 to 4)")  # 这个应该是交叉验证
 parser.add_argument('--norm_layer', default='group')
-parser.add_argument('--swa', action="store_true", help="perform stochastic weight averaging at the end of the training")
-parser.add_argument('--swa_repeat', type=int, default=5, help="how many warm restarts to perform")
-# parser.add_argument('--optim', choices=['adam', 'sgd', 'ranger', 'adamw'], default='ranger')
+
 parser.add_argument('--optim', choices=['adam', 'sgd', 'adamw'], default='adam')
-parser.add_argument('--com', help="add a comment to this run!")
+
 parser.add_argument('--dropout', type=float, help="amount of dropout to use", default=0.)
-parser.add_argument('--warm_restart', action='store_true',
-                    help='use scheduler warm restarts with period of 30')  # 这个可能得用到
+
 parser.add_argument('--full', action='store_true', help='Fit the network on the full training set')  # 用整个训练集训练！
 
 #
-# 加一个device
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")  # 这是我加的
+# Add a device
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print("Training device used: ", device)
 
 # setup
 ngpus = torch.cuda.device_count()
-# if ngpus == 0:
-#     raise RuntimeWarning("This will not be able to run on CPU only")
+if ngpus == 0:
+     raise RuntimeWarning("This could only be run on GPU environment")
 
-# print(f"Working with {ngpus} GPUs")
-
-
-#    if args.optim.lower() == "ranger":
-#        # No warm up if ranger optimizer
-#        args.warm = 0
+print(f"Working with {ngpus} GPUs")
 
 
 def main(args):
@@ -101,13 +91,11 @@ def main(args):
                     f"_batch{args.batch_size}" \
                     f"_optim{args.optim}" \
                     f"_{args.optim}" \
-                    f"_lr{args.lr}-wd{args.weight_decay}_epochs{args.epochs}_deepsup{args.deep_sup}" \
-                    f"_{'fp16' if not args.no_fp16 else 'fp32'}" \
+                    f"_lr{args.lr}-wd{args.weight_decay}_epochs{args.epochs}" \
                     f"_warm{args.warm}_" \
-                    f"_norm{args.norm_layer}{'_swa' + str(args.swa_repeat) if args.swa else ''}" \
-                    f"_dropout{args.dropout}" \
-                    f"_warm_restart{args.warm_restart}" \
-                    f"{'_' + args.com.replace(' ', '_') if args.com else ''}"
+                    f"_dropout{args.dropout}"
+
+
     args.save_folder = pathlib.Path(f"./runs/{args.exp_name}")
     args.save_folder.mkdir(parents=True, exist_ok=True)
     args.seg_folder = args.save_folder / "segs"
@@ -123,24 +111,11 @@ def main(args):
 
     model = model_maker(
         4, 3,  # 问？？这个4，3 是干什么的？？？？？
-        width=args.width, deep_supervision=args.deep_sup,
+        width=args.width,
         norm_layer=get_norm_layer(args.norm_layer), dropout=args.dropout)  # get_norm_layer函数在model下面的 layers.py里
 
     print(f"total number of trainable parameters {count_parameters(model)}\n")  # count_parameters 函数在utils.py里面
 
-
-
-    if args.swa:  # 其中一个参数，stochastic weight averaging，训练后的随机梯度平均，看论文
-        # Create the average model
-        swa_model = model_maker(
-            4, 3,
-            width=args.width, deep_supervision=args.deep_sup,
-            norm_layer=get_norm_layer(args.norm_layer))  # swa_model 和model的区别就是没有dropout
-        for param in swa_model.parameters():
-            param.detach_()
-        # swa_model = swa_model.cuda()
-        swa_model = swa_model.to(device)  # model 放到 GPU 上
-        swa_model_optim = WeightSWA(swa_model)  # WeightSWA 在utils.py 里面
 
     if ngpus > 1:  # 其实这里用不着多GPU 训练
         # model = torch.nn.DataParallel(model).cuda()
@@ -157,7 +132,7 @@ def main(args):
     criterion = EDiceLoss().to(device)  # 这个是用来弄loss的 # EDiceLoss 和 metric 函数在loss下面的dice.py 里面
     metric = criterion.metric  # 这个是用来衡量结果的
 
-    rangered = False  # needed because LR scheduling scheme is different for this optimizer
+
     if args.optim == "adam":
         optimizer = torch.optim.Adam(model.parameters(),
                                      lr=args.lr,
@@ -171,9 +146,7 @@ def main(args):
         print(f"Optimiser used:　adamw. Weight decay argument will not be used. Default is 11e-2")
         optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
-    #    elif args.optim == "ranger":
-    #        optimizer = Ranger(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    #        rangered = True
+
 
     # optionally resume from a checkpoint
     if args.resume:  # 这个是使用现有的ckpt, resume是args的一个参数，传入的是ckpt的文件路径
@@ -232,9 +205,9 @@ def main(args):
         for epoch in range(args.warm):  # 这里这是最开始的warm，还没开始正式训练！！
             ts = time.perf_counter()  # 计算训练时间的
             model.train()
-            training_loss = step(train_loader, model, criterion, metric, args.deep_sup, optimizer, epoch, t_writer,
+            training_loss = step(train_loader, model, criterion, metric, optimizer, epoch, t_writer,
                                  scaler, scheduler, save_folder=args.save_folder,
-                                 no_fp16=args.no_fp16, patients_perf=patients_perf)
+                                  patients_perf=patients_perf)
             te = time.perf_counter()
             print(f"Train Epoch done in {te - ts} s")
 
@@ -242,30 +215,15 @@ def main(args):
             if (epoch + 1) % args.val == 0 and not args.full:  # 默认是每３个epoch做一次validation
                 model.eval()
                 with torch.no_grad():
-                    validation_loss = step(val_loader, model, criterion, metric, args.deep_sup, optimizer, epoch,
-                                           t_writer, save_folder=args.save_folder,
-                                           no_fp16=args.no_fp16)
+                    validation_loss = step(val_loader, model, criterion, metric, optimizer, epoch,
+                                           t_writer, save_folder=args.save_folder)
 
                 t_writer.add_scalar(f"SummaryLoss/overfit", validation_loss - training_loss,
                                     epoch)  # validation_loss 比training_loss 大
 
-    if args.warm_restart:  # 算了吧，不用了。总epoch数得是30的倍数！！
-        print('Total number of epochs should be divisible by 30, else it will do odd things')
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 30, eta_min=1e-7)
-    else:  # 如果没有warm_restart又没用rangered, 就epoch+30
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
-                                                               args.epochs + 30 if not rangered else round(
-                                                                   args.epochs * 0.5))
 
     # 这里才开始了正式训练！！！！！！！！
     print("start training now!...")
-    if args.swa:  # Stochastic weight averaging 训练后的随机梯度平均
-        # c = 15, k=3, repeat = 5 # 这是干啥的？？？看论文！！！c, k repeat 是干啥的？？？？？？？c估计是总共swa epoch数，k是每几个epoch 更新一次
-        c, k, repeat = 30, 3, args.swa_repeat
-        epochs_done = args.epochs
-        reboot_lr = 0
-        if args.debug:
-            c, k, repeat = 2, 1, 2
 
     for epoch in range(args.start_epoch + args.warm, args.epochs + args.warm):
         print(f"Epoch {epoch} start training: ")
@@ -273,9 +231,9 @@ def main(args):
             # do_epoch for one epoch
             ts = time.perf_counter()
             model.train()
-            training_loss = step(train_loader, model, criterion, metric, args.deep_sup, optimizer, epoch, t_writer,
+            training_loss = step(train_loader, model, criterion, metric, optimizer, epoch, t_writer,
                                  scaler, save_folder=args.save_folder,
-                                 no_fp16=args.no_fp16, patients_perf=patients_perf)
+                                 patients_perf=patients_perf)
             te = time.perf_counter()
             print(f"Train Epoch {epoch} done in {te - ts} s\n")
 
@@ -284,11 +242,11 @@ def main(args):
                 print(f"Epoch {epoch} start validation: ")
                 model.eval()
                 with torch.no_grad():
-                    validation_loss = step(val_loader, model, criterion, metric, args.deep_sup, optimizer,
+                    validation_loss = step(val_loader, model, criterion, metric, optimizer,
                                            epoch,
                                            t_writer,
                                            save_folder=args.save_folder,
-                                           no_fp16=args.no_fp16, patients_perf=patients_perf)
+                                           patients_perf=patients_perf)
 
                 t_writer.add_scalar(f"SummaryLoss/overfit", validation_loss - training_loss, epoch)
 
@@ -307,81 +265,22 @@ def main(args):
                 ts = time.perf_counter()
                 print(f"Val epoch done in {ts - te} s\n")
 
-            if args.swa:  # 看论文！！！！c 是干啥的？？？？这里干啥的没看懂！！！
-                if (args.epochs - epoch - c) == 0:
-                    reboot_lr = optimizer.param_groups[0]['lr']
+            scheduler.step()
+            print("scheduler stepped!")
 
-            if not rangered:  # 没使用rangered
-                scheduler.step()
-                print("scheduler stepped!")
-            else:
-                if epoch / args.epochs > 0.5:
-                    scheduler.step()
-                    print("scheduler stepped!")
 
         except KeyboardInterrupt:
             print("Stopping training loop, doing benchmark")  # ?????????干啥的？？？
             break
 
-    if args.swa:  # 用了随机梯度平均 ！！！！！！
-        swa_model_optim.update(model)
-        print("SWA Model initialised!")
-        for i in range(repeat):  # repeat 就是重复了多少次的swa的30个epochs
-            optimizer = torch.optim.Adam(model.parameters(), args.lr / 2,
-                                         weight_decay=args.weight_decay)  # Adam 用到了weight_decay
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, c + 10)  # c 是啥玩意儿来着？？看论文！！
-            for swa_epoch in range(c):
-                # do_epoch for one epoch
-                ts = time.perf_counter()
-                model.train()
-                swa_model.train()
-                current_epoch = epochs_done + i * c + swa_epoch  # epochs_done这里默认应该是200
-                training_loss = step(train_loader, model, criterion, metric, args.deep_sup, optimizer,
-                                     current_epoch, t_writer,
-                                     scaler, no_fp16=args.no_fp16, patients_perf=patients_perf)
-                te = time.perf_counter()
-                print(f"Train Epoch done in {te - ts} s\n")
 
-                t_writer.add_scalar(f"SummaryLoss/train", training_loss, current_epoch)
-                #  怎么这TM才有Traning_loss?? 之前都是overfit
-
-                # update every k epochs and val: # 每k个epoch 更新一次
-                print(f"cycle number: {i}, swa_epoch: {swa_epoch}, total_cycle_to_do {repeat}\n")
-                if (swa_epoch + 1) % k == 0:
-                    swa_model_optim.update(model)
-                    if not args.full:
-                        model.eval()
-                        swa_model.eval()
-                        with torch.no_grad():  # 这怎么还两个loss呢？？
-                            validation_loss = step(val_loader, model, criterion, metric, args.deep_sup, optimizer,
-                                                   current_epoch,
-                                                   t_writer, save_folder=args.save_folder, no_fp16=args.no_fp16)
-                            swa_model_loss = step(val_loader, swa_model, criterion, metric, args.deep_sup, optimizer,
-                                                  current_epoch,
-                                                  t_writer, swa=True, save_folder=args.save_folder,
-                                                  no_fp16=args.no_fp16)
-
-                        t_writer.add_scalar(f"SummaryLoss/val", validation_loss, current_epoch)
-                        t_writer.add_scalar(f"SummaryLoss/swa", swa_model_loss, current_epoch)
-                        t_writer.add_scalar(f"SummaryLoss/overfit", validation_loss - training_loss, current_epoch)
-                        t_writer.add_scalar(f"SummaryLoss/overfit_swa", swa_model_loss - training_loss, current_epoch)
-                scheduler.step()
-        epochs_added = c * repeat  # 最后增加的epochs
-        save_checkpoint(
-            dict(
-                epoch=args.epochs + epochs_added, arch=args.arch,
-                state_dict=swa_model.state_dict(),
-                optimizer=optimizer.state_dict()
-            ),
-            save_folder=args.save_folder, )
-    else:  # 这里没用随机梯度平均！！！就是普通model
-        save_checkpoint(
-            dict(
-                epoch=args.epochs, arch=args.arch,
-                state_dict=model.state_dict(),
-                optimizer=optimizer.state_dict()
-            ),
-            save_folder=args.save_folder, )
+    save_checkpoint(
+        dict(
+            epoch=args.epochs, arch=args.arch,
+            state_dict=model.state_dict(),
+            optimizer=optimizer.state_dict()
+        ),
+        save_folder=args.save_folder, )
 
     try:  # 用训练结束的模型ckpt来生成segmentation！！！
         df_individual_perf = pd.DataFrame.from_records(patients_perf)  # patients performance吗？？
@@ -389,14 +288,14 @@ def main(args):
         df_individual_perf.to_csv(f'{str(args.save_folder)}/patients_indiv_perf.csv')
         reload_ckpt_bis(f'{str(args.save_folder)}/model_best.pth.tar', model)  # reload_ckpt_bis函数在utils.py文件里可以找到
         generate_segmentations(bench_loader, model, t_writer, args)  # generate_segmentations函数在utils.py文件里可以找到
-        # 这是个很大的函数！！里面还要调用一个calculate_metrics的函数，很长很麻烦！！
+        # 这是个很大的函数！！里面还要调用一个calculate_metrics的函数，很长很麻烦！！还得写入val.txt !!
     except KeyboardInterrupt:
         print("Stopping right now!")
 
 
 # 注意这里有个step函数！！
-def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, optimizer, epoch, writer, scaler=None,
-         scheduler=None, swa=False, save_folder=None, no_fp16=False, patients_perf=None):
+def step(data_loader, model, criterion: EDiceLoss, metric, optimizer, epoch, writer, scaler=None,
+         scheduler=None, save_folder=None, patients_perf=None):
 
     # Setup
     batch_time = AverageMeter('BatchTime', ':6.3f')  # utils.py 里有
@@ -413,13 +312,13 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
 
     end = time.perf_counter()
     metrics = []
-    # print(f"fp 16 True or False ?? : {not no_fp16}")
+
     # TODO: not recreate data_aug for each epoch...
     # data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=True).cuda()
-    # data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=True).to(device)
-    # 这个Augmentation就很奇怪，是在step里根据每个脑子生成一个随机数来决定要不要augment的，后面可以改成按dataset来弄
+
+    # Augmentation 是在step里根据每个脑子生成一个随机数来决定要不要augment的，后面可以试试改成按dataset来弄，TODO
     # 这里暂时改成drop channel 是False了
-    data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=False).to(device)
+    data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=True).to(device)
     # DataAugmenter 在models下面的 augmentation_blocks.py 里面
 
     for i, batch in enumerate(data_loader):
@@ -436,30 +335,22 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
         inputs = batch["image"].to(device)
         patient_id = batch["patient_id"]
 
-        with autocast(enabled=not no_fp16):  # 用来自动model训练和算loss的
+        with autocast(enabled=True):  # 用来自动model训练和算loss的
             # data augmentation step # 数据增广，只有train模式下才数据增广
             if mode == "train":
                 inputs = data_aug(inputs)
-            if deep_supervision:  # 有deep supervision
-                segs, deeps = model(inputs)  # 待看model具体是怎么写的？？
-                if mode == "train":  # revert the data aug #如果是deep supervision, 在train的时候就不数据增广
-                    segs, deeps = data_aug.reverse([segs, deeps])
-                loss_ = torch.stack(  # 注意看这里！！如果有deep supervision就会是两种loss的和
-                    [criterion(segs, targets)] + [criterion(deep, targets) for
-                                                  deep in deeps])
-                print(f"main loss: {loss_}")
-                loss_ = torch.mean(loss_)
-            else:  # 无deep supervision
-                segs = model(inputs)  # inputs已经转置旋转过了，训练
-                if mode == "train":
-                    segs = data_aug.reverse(segs)  # 训练完了为了算loss再把数据转置旋转回来！！这样才能算loss
-                loss_ = criterion(segs, targets)
+
+            segs = model(inputs)  # inputs已经转置旋转过了，训练
+            if mode == "train":
+                segs = data_aug.reverse(segs)  # 训练完了为了算loss再把数据转置旋转回来！！这样才能算loss
+            loss_ = criterion(segs, targets)
+
             if patients_perf is not None:  # 记住这里针对每个病人序号单独地加了loss！！
                 patients_perf.append(
                     dict(id=patient_id[0], epoch=epoch, split=mode, loss=loss_.item())
                 )
 
-            writer.add_scalar(f"Loss/{mode}{'_swa' if swa else ''}",  # 在tensorboard里面添加了有关loss的东西
+            writer.add_scalar(f"Loss/{mode}",  # 在tensorboard里面添加了有关loss的东西
                               loss_.item(),
                               global_step=batch_per_epoch * epoch + i)
 
@@ -489,10 +380,10 @@ def step(data_loader, model, criterion: EDiceLoss, metric, deep_supervision, opt
         batch_time.update(time.perf_counter() - end)  # 这是个AverageMeter!!
         end = time.perf_counter()
         # Display progress
-        progress.display(i+1)  # 这是个ProgressMeter !!!
+        progress.display(i+1)  # ProgressMeter !!!
 
     if not model.training:  # 这个应该从model里找！！
-        save_metrics(epoch, metrics, swa, writer, epoch, False, save_folder)  # save_metrics函数在utils.py 可以找到
+        save_metrics(epoch, metrics, writer, epoch, False, save_folder)  # save_metrics函数在utils.py 可以找到
         # teacher是False!!
 
     if mode == "train":  # 训练模式

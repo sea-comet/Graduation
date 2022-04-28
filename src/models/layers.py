@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 import torch
-from torch import nn, nn as nn
+from torch import nn
 from torch.nn import functional as F
 
 
@@ -118,6 +118,24 @@ class BasicConv(nn.Module):  # 传进去的in_planes=2，out_planes=1
         return x
 
 
+
+'''
+    CBAM 模块
+'''
+class CBAM(nn.Module):  # 一个ChannelGate加一个SpatialGate, gate_channels的接收维度就是UBlock的输出维度
+    def __init__(self, gate_channels, reduction_ratio=16, pool_types=None, norm_layer=None):
+        super(CBAM, self).__init__()
+        if pool_types is None:
+            pool_types = ['avg', 'max']                 # reduction_ratio是16
+        self.ChannelGate = ChannelGate(gate_channels, reduction_ratio, pool_types)  # pool_types 是 'avg'或'max'
+        self.SpatialGate = SpatialGate(norm_layer)
+
+    def forward(self, x):
+        x_out = self.ChannelGate(x)
+        x_out = self.SpatialGate(x_out)
+        return x_out
+
+
 class Flatten(nn.Module):
     def forward(self, x):
         return x.view(x.size(0), -1)
@@ -171,16 +189,3 @@ class SpatialGate(nn.Module):
         scale = torch.sigmoid(x_out)     # broadcasting
         return x * scale  # 广播机制
 
-
-class CBAM(nn.Module):  # 一个ChannelGate加一个SpatialGate, gate_channels的接收维度就是UBlock的输出维度
-    def __init__(self, gate_channels, reduction_ratio=16, pool_types=None, norm_layer=None):
-        super(CBAM, self).__init__()
-        if pool_types is None:
-            pool_types = ['avg', 'max']                 # reduction_ratio是16
-        self.ChannelGate = ChannelGate(gate_channels, reduction_ratio, pool_types)  # pool_types 是 'avg'或'max'
-        self.SpatialGate = SpatialGate(norm_layer)
-
-    def forward(self, x):
-        x_out = self.ChannelGate(x)
-        x_out = self.SpatialGate(x_out)
-        return x_out
