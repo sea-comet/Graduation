@@ -115,7 +115,7 @@ def main(args):
         # Convert into absolute path
         config_file = pathlib.Path(config).resolve()
         print("config file: ",config_file)
-        ckpt = config_file.with_name("model_best.pth.tar")  # 换了一个文件名
+        ckpt = config_file.with_name("model_best.pth.tar")  # 在当前路径下换一个文件名
         with config_file.open("r") as file:
             old_args = yaml.safe_load(file)  # 打开yaml文件
             old_args = SimpleNamespace(**old_args, ckpt=ckpt)  # 把args从yaml文件load进来
@@ -142,7 +142,7 @@ def main(args):
 
         model = model_maker(
             4, 3,
-            width=model_args.width, deep_supervision=model_args.deep_sup,
+            width=model_args.width,
             norm_layer=get_norm_layer(model_args.norm_layer), dropout=model_args.dropout)
         print(f"Creating {model_args.arch}")
 
