@@ -72,7 +72,8 @@ For other options:
 python -m src.test -h 
 ```
 
-# 毕设训练结果.zip ---> Can be found in the link below
+# Results for Training & Validation & Segmentation 
+## 毕设训练结果.zip ---> Can be found in the link below
 
 * 链接: [百度网盘](https://pan.baidu.com/s/1k_6mCowWd16sU8yR2jxQpw)
 * `提取码: dg8v `
