@@ -104,7 +104,7 @@ def main(args):
     # print("设置的args: ", args.config)
 
     current_experiment_time = datetime.now().strftime('%Y%m%d_%T').replace(":", "")
-    save_folder = pathlib.Path(f"./preds/{current_experiment_time}") # 记住在preds文件夹下面!!
+    save_folder = pathlib.Path(f"./preds/{current_experiment_time}") # 在preds文件夹下面
     save_folder.mkdir(parents=True, exist_ok=True)
 
     with (save_folder / 'args.txt').open('w') as f:
@@ -115,7 +115,7 @@ def main(args):
         # Convert into absolute path
         config_file = pathlib.Path(config).resolve()
         print("config file: ",config_file)
-        ckpt = config_file.with_name("model_best.pth.tar")  # 在当前路径下换一个文件名
+        ckpt = config_file.with_name("model_best.pth.tar")  # 在当前路径下换一个文件名, 当前文件路径要有训练好的model_best.pth.tar
         with config_file.open("r") as file:
             old_args = yaml.safe_load(file)  # 打开yaml文件
             old_args = SimpleNamespace(**old_args, ckpt=ckpt)  # 把args从yaml文件load进来
@@ -137,7 +137,7 @@ def main(args):
     models_list = []
     normalisations_list = []
     for model_args in args_list:  # model_args 是从yaml文件里load进来的
-        # print("Model used: ",model_args.arch)   # 用了哪一个model
+        # print("Model used: ",model_args.arch)   # 用which model
         model_maker = getattr(models, model_args.arch)
 
         model = model_maker(
@@ -164,9 +164,9 @@ def main(args):
     loader_zscore = torch.utils.data.DataLoader(
         dataset_zscore, batch_size=1, num_workers=2)
 
-    print("Val dataset number of batch: ", len(loader_minmax)) # 几个batch, 也就是几个脑子
+    print("Val dataset number of batch: ", len(loader_minmax)) # 几个batch, 就是几个脑子
 
-    # 这个generate_segmentations函数是下面的这个，不是utils.py里面的
+    # 这个generate_segmentations函数是本文件中的，不是utils.py里面的
     generate_segmentations((loader_minmax, loader_zscore), models_list, normalisations_list, args)
 
 

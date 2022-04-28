@@ -5,7 +5,6 @@ from torch import nn
 from torch.nn import functional as F
 
 
-
 def get_norm_layer(norm_type="group"):  # 默认的norm_type: 何恺明的 group normalization
     if "group" in norm_type:
         try:
@@ -34,7 +33,7 @@ def default_norm_layer(planes, groups=16):
 def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1, bias=False):  # kernel_size 是3的卷积！！
     """3x3 convolution with padding"""
     return nn.Conv3d(in_planes, out_planes, kernel_size=3, stride=stride,
-                     padding=dilation, groups=groups, bias=bias, dilation=dilation)  # groups 是什么意思？？
+                     padding=dilation, groups=groups, bias=bias, dilation=dilation)  # group
 
 
 def conv1x1(in_planes, out_planes, stride=1, bias=True): # 1*1 卷积
@@ -46,7 +45,7 @@ class ConvBnRelu(nn.Sequential):
 
     def __init__(self, inplanes, planes, norm_layer=None, dilation=1, dropout=0):
         if norm_layer is not None:
-            super(ConvBnRelu, self).__init__(  # 传进去个字典
+            super(ConvBnRelu, self).__init__(  # 传进去字典
                 OrderedDict(
                     [           # conv3x3 在上面
                         ('conv', conv3x3(inplanes, planes, dilation=dilation)),
@@ -69,7 +68,8 @@ class ConvBnRelu(nn.Sequential):
 
 
 class UBlock(nn.Sequential):
-    """Unet mainstream downblock. # Unet encoder 下降和上升用的block
+    """
+       Unet mainstream downblock. # Unet encoder 基础block
     """
 
     def __init__(self, inplanes, midplanes, outplanes, norm_layer, dilation=(1, 1), dropout=0):

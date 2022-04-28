@@ -30,14 +30,14 @@ parser.add_argument('--width', default=48, help='base number of features for Une
 parser.add_argument('-j', '--workers', default=2, type=int, metavar='N',
                     help='number of data loading workers (default: 2).')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
-                    help='manual epoch number (useful on restarts)')  # 这个用在重新启动，200 epoch 后面训练的那150个epoch !!
+                    help='manual epoch number (useful on restarts)')  # 可以用于重新启动
 parser.add_argument('--epochs', default=150, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('-b', '--batch-size', default=1, type=int,
                     metavar='N',
                     help='mini-batch size (default: 1)')
 parser.add_argument('--lr', '--learning-rate', default=1e-4, type=float,
-                    metavar='LR', help='initial learning rate', dest='lr')  # dest 就是把获取的值放到哪个变量里的意思
+                    metavar='LR', help='initial learning rate', dest='lr')  # dest: 把获取的值放到某变量
 parser.add_argument('--wd', '--weight-decay', default=0., type=float,
                     metavar='W', help='weight decay (default: 0)',
                     dest='weight_decay')
@@ -51,7 +51,7 @@ parser.add_argument('--seed', default=16111990, help="seed for train/val split")
 parser.add_argument('--warm', default=3, type=int, help="number of warming up epochs")
 
 parser.add_argument('--val', default=3, type=int, help="how often to perform validation step")
-parser.add_argument('--fold', default=0, type=int, help="Split number (0 to 4)")  # 这个应该是交叉验证
+parser.add_argument('--fold', default=0, type=int, help="Split number (0 to 4)")  # 交叉验证
 parser.add_argument('--norm_layer', default='group')
 
 parser.add_argument('--optim', choices=['adam', 'sgd', 'adamw'], default='adam')
@@ -75,11 +75,6 @@ print(f"Working with {ngpus} GPUs")
 
 def main(args):
     """ The main training function.
-
-    Only works for single node (be it single or multi-GPU)
-
-    Parameters
-    ----------
     args :
         Parsed arguments
     """
@@ -101,30 +96,31 @@ def main(args):
     args.seg_folder = args.save_folder / "segs"
     args.seg_folder.mkdir(parents=True, exist_ok=True)
     args.save_folder = args.save_folder.resolve()  # 变成绝对路径
-    save_args(args)  # utils.py 里面有save_args这个函数
-    t_writer = SummaryWriter(str(args.save_folder))  # Tensorboard 里面的
+    save_args(args)  # utils.py 里面 save_args函数
+    t_writer = SummaryWriter(str(args.save_folder))  # Tensorboard add
 
     # Create model
     print(f"Creating {args.arch} model...\n")
 
-    model_maker = getattr(models, args.arch)  # 大概意思就是获取Unet, 或 Atten_Unet
+    model_maker = getattr(models, args.arch)  # 获取Unet, or Atten_Unet
 
     model = model_maker(
         4, 3,  # inplanes: 4 代表4个modality 相当于channels,  num_class: 3 代表ET, TC, WT
         width=args.width,
-        norm_layer=get_norm_layer(args.norm_layer), dropout=args.dropout)  # get_norm_layer函数在model下面的 layers.py里
+        norm_layer=get_norm_layer(args.norm_layer), dropout=args.dropout)  # get_norm_layer函数在model下面layers.py里
 
     model = model.to(device)
 
-    # print("Model info: ", model)  # 打印 model 信息，layer信息
-    model_file = args.save_folder / "model.txt"  # 在runs 目录下面
+    # print("Model info: ", model)  # 可打印 model 信息，layer信息
+    model_file = args.save_folder / "model.txt"  # runs 目录下面
     with model_file.open("w") as f:
         print(model, file=f)
 
-    # criterion = EDiceLoss().cuda()   # loss是这个！！
-    criterion = EDiceLoss().to(device)  # 这个是用来弄loss的 # EDiceLoss 和 metric 函数在loss下面的dice.py 里面
-    metric = criterion.metric  # 这个是用来衡量结果的
+    # criterion = EDiceLoss().cuda()   # loss是这个
+    criterion = EDiceLoss().to(device)  # EDiceLoss 和 metric 函数在loss下面的dice.py 里
+    metric = criterion.metric  # 用来衡量结果的 metrics !
 
+    # 不同optimizer
     if args.optim == "adam":
         optimizer = torch.optim.Adam(model.parameters(),
                                      lr=args.lr,
@@ -141,8 +137,8 @@ def main(args):
 
 
     # optionally resume from a checkpoint
-    if args.resume:  # 这个是使用现有的ckpt, resume是args的一个参数，传入的是ckpt的文件路径
-        reload_ckpt(args, model, optimizer)  # reload_ckpt函数在utils.py 里面可以找到
+    if args.resume:  # resume使用现有的ckpt, resume是args的一个参数，传入的是ckpt文件路径
+        reload_ckpt(args, model, optimizer)  # reload_ckpt函数在utils.py 里
 
     if args.debug:  # 可以用来测试
         args.epochs = 3
@@ -151,7 +147,7 @@ def main(args):
 
     if args.full:
         train_dataset, bench_dataset = get_datasets(args.seed, args.debug,
-                                                    full=True)  # get_datasets函数在dataset下面的brats.py 里面能找到
+                                                    full=True)  # get_datasets函数在dataset下的brats.py 里
 
         train_loader = torch.utils.data.DataLoader(
             train_dataset, batch_size=args.batch_size, shuffle=True,
@@ -161,16 +157,16 @@ def main(args):
             bench_dataset, batch_size=1, num_workers=args.workers)
 
     else:
-        # 这里竟然有seed,也不知道干什么的
+        # 有seed
         train_dataset, val_dataset, bench_dataset = get_datasets(args.seed, args.debug, fold_number=args.fold)
 
-        train_loader = torch.utils.data.DataLoader(  # train占五分之四？validation占五分之一？？
+        train_loader = torch.utils.data.DataLoader(  # train占五分之四, validation占五分之一
             train_dataset, batch_size=args.batch_size, shuffle=True,
             num_workers=args.workers, pin_memory=False, drop_last=True)
 
         val_loader = torch.utils.data.DataLoader(
             val_dataset, batch_size=max(1, args.batch_size // 2), shuffle=False,
-            pin_memory=False, num_workers=args.workers, collate_fn=determinist_collate)  # 这里没太看懂，去看论文！！
+            pin_memory=False, num_workers=args.workers, collate_fn=determinist_collate)
         # determinist_collate在dataset的batch_utils.py 里面
 
         bench_loader = torch.utils.data.DataLoader(
@@ -180,22 +176,21 @@ def main(args):
     print("Train dataset number of batch:", len(train_loader))
 
     # create grad scaler
-    scaler = GradScaler()  # torch.cuda.amp 里的，主要用来完成梯度缩放
-    # torch.cuda.amp.autocast：主要用作上下文管理器或者装饰器，来确定使用混合精度的范围。
+    scaler = GradScaler()  # torch.cuda.amp 里，用来完成梯度缩放
 
     # Actual Train loop
-    best = np.inf  # ？？？？这是干啥的？？？
-    print("start warm-up now! 3 epochs")  # 看不懂！！　cur_iter 是什么？？然后warm up 怎么弄的，看论文！！
-    if args.warm != 0:  # 默认有3个epoch的最初warm
+    best = np.inf  # 设置为无限大
+    print("start warm-up now! 3 epochs")
+    if args.warm != 0:  # 默认有3个epoch的最初warm up
         tot_iter_train = len(train_loader)
-        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer,  # 这是啥玩意儿？？
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer,  # schduler !
                                                       lambda cur_iter: (1 + cur_iter) / (tot_iter_train * args.warm))
 
     patients_perf = []
 
     if not args.resume:
-        for epoch in range(args.warm):  # 这里这是最开始的warm，还没开始正式训练！！
-            ts = time.perf_counter()  # 计算训练时间的
+        for epoch in range(args.warm):  # 最开始的warm，未开始正式训练！！
+            ts = time.perf_counter()  # 计算训练时间等
             model.train()
             training_loss = step(train_loader, model, criterion, metric, optimizer, epoch, t_writer,
                                  scaler, scheduler, save_folder=args.save_folder,
@@ -204,7 +199,7 @@ def main(args):
             print(f"Train Epoch done in {te - ts} s")
 
             # Validate at the end of epoch every val step
-            if (epoch + 1) % args.val == 0 and not args.full:  # 默认是每３个epoch做一次validation
+            if (epoch + 1) % args.val == 0 and not args.full:  # 默认每３个epoch做一次validation
                 model.eval()
                 with torch.no_grad():
                     validation_loss = step(val_loader, model, criterion, metric, optimizer, epoch,
@@ -215,7 +210,7 @@ def main(args):
 
 
 
-    # 这里才开始了正式训练！！！！！！！！
+    # 开始了正式训练！！
     print("start training now!...")
 
     for epoch in range(args.start_epoch + args.warm, args.epochs + args.warm):
@@ -245,7 +240,7 @@ def main(args):
 
                 if validation_loss < best:
                     best = validation_loss
-                    model_dict = model.state_dict()  # 包含bias和weight
+                    model_dict = model.state_dict()  # including bias & weight
                     save_checkpoint(
                         dict(
                             epoch=epoch, arch=args.arch,
@@ -263,7 +258,7 @@ def main(args):
 
 
         except KeyboardInterrupt:
-            print("Stopping training loop, doing benchmark")  # ?????????干啥的？？？
+            print("Stopping training loop, doing benchmark")
             break
 
 
@@ -275,27 +270,27 @@ def main(args):
         ),
         save_folder=args.save_folder, )
 
-    try:  # 用训练结束的模型ckpt来生成segmentation！！！
-        df_individual_perf = pd.DataFrame.from_records(patients_perf)  # patients performance吗？？
+    try:  # 用训练结束的模型ckpt来生成segmentation
+        df_individual_perf = pd.DataFrame.from_records(patients_perf)  # patients performance
         # print("DataFrame records df_individual_perf: ",df_individual_perf,"\n")
         df_individual_perf.to_csv(f'{str(args.save_folder)}/patients_indiv_perf.csv')
-        reload_ckpt_bis(f'{str(args.save_folder)}/model_best.pth.tar', model)  # reload_ckpt_bis函数在utils.py文件里可以找到
-        generate_segmentations(bench_loader, model, t_writer, args)  # generate_segmentations函数在utils.py文件里可以找到
-        # 这是个很大的函数！！里面还要调用一个calculate_metrics的函数，很长很麻烦！！还得写入val.txt !!
+        reload_ckpt_bis(f'{str(args.save_folder)}/model_best.pth.tar', model)  # reload_ckpt_bis函数在utils.py文件里
+        generate_segmentations(bench_loader, model, t_writer, args)  # generate_segmentations函数在utils.py文件里
+        # 里面调用calculate_metrics的函数，结果写入val.txt !!
     except KeyboardInterrupt:
         print("Stopping right now!")
 
 
-# 注意这里有个step函数！！
+# step函数，训练每个epoch
 def step(data_loader, model, criterion: EDiceLoss, metric, optimizer, epoch, writer, scaler=None,
          scheduler=None, save_folder=None, patients_perf=None):
 
     # Setup
-    batch_time = AverageMeter('BatchTime', ':6.3f')  # utils.py 里有
+    batch_time = AverageMeter('BatchTime', ':6.3f')  # utils.py 里可更改
     data_time = AverageMeter('DataTime', ':6.3f')
     losses = AverageMeter('Loss', ':6.4f')
     Acc = AverageMeter('Acc', ':6.4f')
-    # TODO monitor teacher loss
+
     mode = "train" if model.training else "val"
     batch_per_epoch = len(data_loader)
     progress = ProgressMeter(
@@ -306,12 +301,12 @@ def step(data_loader, model, criterion: EDiceLoss, metric, optimizer, epoch, wri
     end = time.perf_counter()
     metrics = []
 
-    # TODO: not recreate data_aug for each epoch...
+
     # data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=True).cuda()
     # data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=True).to(device)
-    # 这个Augmentation就很奇怪，是在step里根据每个脑子生成一个随机数来决定要不要augment的，后面可以改成按dataset来弄
-    # 这里暂时改成drop channel 是False了
-    data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=False).to(device)
+    # Augmentation是在step里根据每个脑子生成一个随机数来决定要不要各种augment，后面可以改成按dataset来弄 TODO
+
+    data_aug = DataAugmenter(p=0.8, noise_only=False, channel_shuffling=False, drop_channnel=True).to(device)
     # DataAugmenter 在models下面的 augmentation_blocks.py 里面
 
     for i, batch in enumerate(data_loader):
@@ -319,7 +314,7 @@ def step(data_loader, model, criterion: EDiceLoss, metric, optimizer, epoch, wri
         data_time.update(time.perf_counter() - end)
 
         # targets = batch["label"].cuda(non_blocking=True)
-        if ngpus == 0:  # label就是seg那些
+        if ngpus == 0:
             targets = batch["label"].to(device)
         else:
             targets = batch["label"].cuda(non_blocking=True)
@@ -328,37 +323,37 @@ def step(data_loader, model, criterion: EDiceLoss, metric, optimizer, epoch, wri
         inputs = batch["image"].to(device)
         patient_id = batch["patient_id"]
 
-        with autocast(enabled=True):  # 用来自动model训练和算loss的
-            # data augmentation step # 数据增广，只有train模式下才数据增广
+        with autocast(enabled=True):  # 用来自动model训练和算loss
+            # data augmentation step # 数据增广，只有train模式下数据增广
             if mode == "train":
                 inputs = data_aug(inputs)
 
             segs = model(inputs)  # inputs已经转置旋转过了，训练
             if mode == "train":
-                segs = data_aug.reverse(segs)  # 训练完了为了算loss再把数据转置旋转回来！！这样才能算loss
+                segs = data_aug.reverse(segs)  # 训练完了算loss, 需再把数据转置旋转回来
             loss_ = criterion(segs, targets)
 
-            if patients_perf is not None:  # 记住这里针对每个病人序号单独地加了loss！！
+            if patients_perf is not None:  # 记住这里针对每个病人单独加了loss
                 patients_perf.append(
                     dict(id=patient_id[0], epoch=epoch, split=mode, loss=loss_.item())
                 )
 
-            writer.add_scalar(f"Loss/{mode}",  # 在tensorboard里面添加了有关loss的东西
+            writer.add_scalar(f"Loss/{mode}",  # Tensorboard里面添加了有关loss的graph
                               loss_.item(),
                               global_step=batch_per_epoch * epoch + i)
 
             # measure accuracy and record loss_ 衡量准确度，记录loss
             if not np.isnan(loss_.item()):
                 losses.update(loss_.item())
-                Acc.update(1. - loss_.item())# 这是个AverageMeter ！！！可以update
+                Acc.update(1. - loss_.item())# AverageMeter, 可以update
             else:
                 print("NaN in model loss!!")
 
-            if not model.training:  # 如果是validation模式，就不用criterion，用metric, 算DSC !!
-                metric_ = metric(segs, targets)  # 算出来的dice: 2*(inputs 和targets都=1的数量) / (inputs=1的数量 + targets=1的数量)
+            if not model.training:  # 如果是validation模式，就不用criterion，用metric, 算DSC !! score
+                metric_ = metric(segs, targets)  # dice: 2*(inputs 和targets都=1的数量) / (inputs=1的数量 + targets=1的数量)
                 metrics.extend(metric_)
 
-        # compute gradient and do SGD step 计算梯度 loss.backward 和step!!
+        # compute gradient and do SGD step 计算梯度 loss.backward 和step
         if model.training:
             scaler.scale(loss_).backward()
             scaler.step(optimizer)
@@ -370,18 +365,18 @@ def step(data_loader, model, criterion: EDiceLoss, metric, optimizer, epoch, wri
             scheduler.step()
 
         # measure elapsed time
-        batch_time.update(time.perf_counter() - end)  # 这是个AverageMeter!!
+        batch_time.update(time.perf_counter() - end)  # AverageMeter!!
         end = time.perf_counter()
         # Display progress
-        progress.display(i+1)  # 这是个ProgressMeter !!!
+        progress.display(i+1)  # ProgressMeter
 
-    if not model.training:  # 这个应该从model里找！！
-        save_metrics(epoch, metrics, writer, epoch, False, save_folder)  # save_metrics函数在utils.py 可以找到
+    if not model.training:
+        save_metrics(epoch, metrics, writer, epoch, False, save_folder)  # save_metrics函数在utils.py里
         # teacher是False!!
 
     if mode == "train":  # 训练模式
-        writer.add_scalar(f"SummaryLoss/train", losses.avg, epoch)  # 这些在Tensorboard 都可以看到！！
-        writer.add_scalar(f"SummaryAcc/train", 1. - losses.avg, epoch) # 在tensorboard加了一个关于accuracy的scaler
+        writer.add_scalar(f"SummaryLoss/train", losses.avg, epoch)  # 在Tensorboard 可以看到
+        writer.add_scalar(f"SummaryAcc/train", 1. - losses.avg, epoch) # tensorboard添加个关于accuracy的scaler
     else:  # validation模式
         writer.add_scalar(f"SummaryLoss/val", losses.avg, epoch)
         writer.add_scalar(f"SummaryAcc/val", 1. - losses.avg, epoch)

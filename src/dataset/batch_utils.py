@@ -8,13 +8,13 @@ def determinist_collate(batch):
     batch = pad_batch_to_max_shape(batch)
     return default_collate(batch)
 
-
-def pad_batch_to_max_shape(batch): # 没太看懂是干什么的，不会是给每个脑子按16步的步长切好多块吧？？# 这个在train.py中给validation使用
+# 在train.py中给validation使用 在validation中将含肿瘤的最大部分切出
+def pad_batch_to_max_shape(batch):
     shapes = (sample['label'].shape for sample in batch)
     _, z_sizes, y_sizes, x_sizes = list(zip(*shapes))
     maxs = [int(max(z_sizes)), int(max(y_sizes)), int(max(x_sizes))]
     for i, max_ in enumerate(maxs):
-        max_stride = 16             # 论文里注意这个16，不记得了！！看看是什么？？
+        max_stride = 16             # 注意16
         if max_ % max_stride != 0:
             # Make it divisible by 16
             maxs[i] = ((max_ // max_stride) + 1) * max_stride
@@ -31,13 +31,13 @@ def pad_batch_to_max_shape(batch): # 没太看懂是干什么的，不会是给�
         elem['image'], elem['label'] = F.pad(elem['image'], pads), F.pad(elem['label'], pads)
     return batch
 
-
-def pad_batch1_to_compatible_size(batch): # 这个给inference.py 中的pad使用，切出来的脑子很多都形状不规则，还好多单数！！
+ # 用于test.py 中的使用
+def pad_batch1_to_compatible_size(batch):
     print("pad过的batch shape: ", batch.shape)
     shape = batch.shape
     zyx = list(shape[-3:])
     for i, dim in enumerate(zyx): # 循环为z,y,x维度的大小
-        max_stride = 16  # 让z,y,x 分别都为16的倍数，好统一！！因为当时切脑子的时候只框住了最小肿瘤
+        max_stride = 16  # 让z,y,x 分别都为16的倍数
         if dim % max_stride != 0:
             # Make it divisible by 16
             zyx[i] = ((dim // max_stride) + 1) * max_stride
@@ -45,5 +45,5 @@ def pad_batch1_to_compatible_size(batch): # 这个给inference.py 中的pad使�
     zpad, ypad, xpad = zmax - batch.size(2), ymax - batch.size(3), xmax - batch.size(4) # z,y,x分别需要填充的大小！！
     assert all(pad >= 0 for pad in (zpad, ypad, xpad)), "Negative padding value error !!"
     pads = (0, xpad, 0, ypad, 0, zpad)
-    batch = F.pad(batch, pads) # 填充过的脑子图！！每个batch只有一个，每个batch都可能不一样，因为是按16的最小倍数填充的！！
+    batch = F.pad(batch, pads) # 填充过的脑子图！每个batch只有一个
     return batch, (zpad, ypad, xpad)

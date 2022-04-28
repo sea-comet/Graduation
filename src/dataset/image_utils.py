@@ -4,8 +4,8 @@ import random
 
 import numpy as np
 
-
-def pad_or_crop_image(image, seg=None, target_size=(128, 144, 144)):
+# padding 或者cropping 缺就crop, 少就pad
+def pad_or_crop_image(image, seg=None, target_size=(128, 128, 128)):
     c, z, y, x = image.shape
     # get_crop_slice函数在下面,切割出来（128，128，128）
     z_slice, y_slice, x_slice = [get_crop_slice(target, dim) for target, dim in zip(target_size, (z, y, x))]
@@ -41,7 +41,7 @@ def get_crop_slice(target_size, dim): #切割脑子 # tick
         crop_extent = dim - target_size
         left = random.randint(0, crop_extent)
         right = crop_extent - left
-        return slice(left, dim - right) # dim-right 其实就等于left+target_size，slice返回的东西可以放在列表里当切割index
+        return slice(left, dim - right) # dim-right = left+target_size，slice返回的可以放在列表里当切割index
     elif dim <= target_size:
         return slice(0, dim)
 
@@ -57,14 +57,10 @@ def normalize(image): # tick
 
 
 
-def irm_min_max_preprocess(image, low_perc=1, high_perc=99): # perc就是percentage的意思. 用最大值和最小值来normalize
-    """Main pre-processing function used for the challenge (seems to work the best).
-
-    Remove outliers voxels first, then min-max scale.
-
-    Warnings
-    --------
-    This will not do it channel wise!!
+def irm_min_max_preprocess(image, low_perc=1, high_perc=99): # perc是percentage. 用最大值和最小值来normalize
+    """
+    Remove outliers voxels first
+    Then use min-max scale.
     """
 
     non_zeros = image > 0
