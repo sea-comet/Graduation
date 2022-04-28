@@ -76,7 +76,8 @@ python -m src.test -h
 ![image](https://github.com/sea-comet/Graduation/blob/master/images/model.png)
 
 # Results
-## For segmentation result. Here is the comparison between The predicted segmentation result and the ground truth labels for patient 9
+* For segmentation result. Here is the comparison between 
+* The predicted segmentation result and the ground truth labels for patient 9
 ### predicted segmentation result
 ![image](https://github.com/sea-comet/Graduation/blob/master/images/patient%209_Pred%20seg.png)
 ### ground truth labels
