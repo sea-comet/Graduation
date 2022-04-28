@@ -73,7 +73,7 @@ python -m src.test -h
 ```
 # Model 
 ## Model used in this project: Atten_Unet. It is a varient from 3D-Unet + CBAM block
-![image](../images/model.png)
+![image](https://github.com/sea-comet/Graduation/blob/master/images/model.png)
 
 # Results
 * For segmentation result: 
