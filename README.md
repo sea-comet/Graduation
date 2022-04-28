@@ -81,7 +81,7 @@ python -m src.test -h
 # Model 
 * Model proposed in this project: Atten_Unet.
 *  It is a varient from 3D-Unet + CBAM block
-*  
+*                    The architecture for Atten_Unet
 ![image](https://github.com/sea-comet/Graduation/blob/master/images/model.png)
 
 # Results
