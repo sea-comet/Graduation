@@ -1,4 +1,4 @@
-# Brain tumor segmentation for Graduation -- Dong Wanqi 
+# Graduation Project: Brain tumor segmentation -- Dong Wanqi 
 # Environment 
 Linux platform with GPU. Code can be run on Google Colab
 # Fast running on Google Colab
@@ -11,7 +11,7 @@ pip install -r requirements.txt
 
 # Training
 
-First change your data folder by modifying values in `src/config.py`
+First change your data folder by modifying values in `src/config.py` `BRATS_TRAIN_FOLDERS` is for 5-fold training and validation, which use dataset with ground truth labels seg.nii. `BRATS_VAL_FOLDER` is for testing, which use dataset with no labels. Datasets come from BraTS2020.
 
 ```python
 # Used for 5 fold-Training and Validation
