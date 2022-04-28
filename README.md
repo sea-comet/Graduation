@@ -83,3 +83,7 @@ python -m src.test -h
 ### ground truth labels
 ![image](https://github.com/sea-comet/Graduation/blob/master/images/patient%209_Ground%20truth.png)
 
+# 毕设训练结果 ---> Can be found in the link below [百度网盘]
+
+* 链接: [百度网盘 毕设训练结果](https://pan.baidu.com/s/1k_6mCowWd16sU8yR2jxQpw)
+* `提取码: dg8v `
