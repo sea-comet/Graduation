@@ -1,8 +1,12 @@
 # Graduation Project: Brain tumor segmentation -- Dong Wanqi 
 # Environment 
-Linux platform with GPU. Code can be run on Google Colab
+* Linux platform with GPU.
+* Code can be run on Google Colab
 # Fast running on Google Colab
 
+I also prepared colab notebooks that allow you to run the algorithm on Google Colab. Upload the file to Google Colab and then start running !
+
+*  [Graduation_Google Colab](https://github.com/sea-comet/Graduation/blob/master/Graduation_Google%20Colab.ipynb) 
 # Installation
 
 ```bash
@@ -51,11 +55,11 @@ a `segs` folder containing the generated .nii.gz segmentations for the validatio
 ```
 Drag the segmentation result in .nii.gz file in folder 'seg' into the software ITK-Snap, along with the orginal nii.gz file from any of the four modalities t1, t1ce, t2, flair, then the segmentation result on the brain can be visualized.
 
-The yaml file is required to perform inference on the validation and train set
+The yaml file is required to perform inference on testing dataset 
 
 # Testing
 
-The script to perform testing is... `test.py` !!  You should change the path to the yaml file yourself!!
+The script to perform testing is `test.py` !!  You should change the path to the yaml file yourself!!
 
 ```bash
 !python -m src.test --config "/content/Graduation/runs/×××××.yaml" --devices 0 --mode val 
