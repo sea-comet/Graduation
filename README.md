@@ -1,4 +1,4 @@
-# Graduation Project: Brain tumor segmentation <br>(Dong Wanqi)
+# Graduation Project: 3D MRI Brain tumor segmentation <br>(Dong Wanqi)
 
 # Report and PPT
 Report and PPT and be found here:
