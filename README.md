@@ -91,9 +91,9 @@ python -m src.test -h
 
 It contains three seperate results for training & validation and testing. 
 
-* Mainly look at the results in folder `3 run_Atten Unet_drop 0.2_noise (0.9,1.1)_150 epoch`, `3 pred_Atten Unet_drop 0.2_noise (0.9,1.1)_150 epoch`, and `3 Tensorboard 图像` because they use the final chosen parameters and model. The results in folder name start with 4 used U-Net structure as comparison, and the results in folder name start with 5 choose to use no channel dropiing.
+Please mainly look at the results in folder `3 run_Atten Unet_drop 0.2_noise (0.9,1.1)_150 epoch`, `3 pred_Atten Unet_drop 0.2_noise (0.9,1.1)_150 epoch`, and `3 Tensorboard 图像` because they use the final chosen parameters and model. The results in folder name start with 4 used U-Net structure as comparison, and the results in folder name start with 5 choose to use no channel dropiing.
  
-* The explanation of files in the folder `3 run_Atten Unet_drop 0.2_noise (0.9,1.1)_150 epoch` can be found in `Training` section, since they are actually the `runs` folder
+The explanation of files in the folder `3 run_Atten Unet_drop 0.2_noise (0.9,1.1)_150 epoch` can be found in `Training` section, since they are actually the `runs` folder
 
 # Model 
 *  Model proposed in this project: Atten_Unet.
