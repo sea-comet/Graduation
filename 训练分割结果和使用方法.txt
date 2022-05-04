@@ -5,7 +5,7 @@ https://github.com/sea-comet/Graduation/blob/master/README.md
 Github 代码地址
 https://github.com/sea-comet/Graduation/tree/master
 
-毕设训练结果及分割结果，见百度网盘
+毕设训练结果及分割结果，见百度网盘. 详细解释见Github
 链接: https://pan.baidu.com/s/1k_6mCowWd16sU8yR2jxQpw 提取码: dg8v 
 
 文件名：毕设训练结果.zip 
