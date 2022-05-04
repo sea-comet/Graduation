@@ -2,11 +2,17 @@
 # Environment 
 * Linux platform with GPU.
 * Code can be run on Google Colab
+
+# Report and PPT
+Reports and PPT and be found here:
+* [Report](https://github.com/sea-comet/Graduation/blob/master/report%20and%20PPT/Dong%20Wanqi_2018213196_FinalReport.pdf)
+* [PPT](https://github.com/sea-comet/Graduation/blob/master/report%20and%20PPT/Dong%20Wanqi_2018213196_FinalViva.pdf)
+
 # Fast running on Google Colab
 
 I also prepared colab notebooks that allow you to run the algorithm on Google Colab. Upload the file to Google Colab and then start training & validation or testing
 
-* runnning on Google Colab: [Graduation_Google Colab notebook](https://github.com/sea-comet/Graduation/blob/master/Graduation_Google%20Colab.ipynb) 
+* runnning on Google Colab: [Graduation_Google Colab notebook](https://github.com/sea-comet/Graduation/blob/master/src/Graduation_Google%20Colab.ipynb) 
 # Installation
 
 ```python
