@@ -1,12 +1,13 @@
 # Graduation Project: Brain tumor segmentation <br>(Dong Wanqi)
-# Environment 
-* Platform with GPU.
-* Code can be run on Google Colab
 
 # Report and PPT
 Reports and PPT and be found here:
 * [Report](https://github.com/sea-comet/Graduation/blob/master/report%20and%20PPT/Dong%20Wanqi_2018213196_FinalReport.pdf)
 * [PPT](https://github.com/sea-comet/Graduation/blob/master/report%20and%20PPT/Dong%20Wanqi_2018213196_FinalViva.pdf)
+
+# Environment 
+* Platform with GPU.
+* Code can be run on Google Colab
 
 # Fast running on Google Colab
 
