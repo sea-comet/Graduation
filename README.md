@@ -52,7 +52,7 @@ After training, you will have a `runs` folder created containing a directory for
 
 * For each run, a yaml file with the option used for the runs will be generated
 * A `segs` folder containing the generated .nii.gz files. These are the segmentation results.
-* First drag the orginal nii.gz file from any of the four modalities t1, t1ce, t2, flair into the software `ITK-Snap`[[Download link]](http://www.itksnap.org/pmwiki/pmwiki.php?n=Downloads.SNAP3)(A specilaized software used for medical data visualization) to show the brain background, then drag the segmentation result `.nii` file in folder `segs` into the software ITK-Snap, too, then the segmentation result on the brain can be visualized.
+* First drag the orginal nii.gz file from any of the four modalities t1, t1ce, t2, flair into software `ITK-Snap`[[Download link]](http://www.itksnap.org/pmwiki/pmwiki.php?n=Downloads.SNAP3)(A specilaized software used for medical data visualization) to show the brain background, then drag the segmentation result `.nii` file in folder `segs` into the software ITK-Snap, too, then the segmentation result on the brain can be visualized.
 * You can also use the "display nii data.ipynb" to see the segmentation
 
 The content in the `runs` folder. 
