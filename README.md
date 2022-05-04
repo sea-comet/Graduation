@@ -96,14 +96,19 @@ Please mainly look at the results in folder `3 run_Atten Unet_drop 0.2_noise (0.
 The explanation of each file in the folder `3 run_Atten Unet_drop 0.2_noise (0.9,1.1)_150 epoch` can be found in `Training` section, since they are actually the `runs` folder
 
 # Model 
-*  Model proposed in this project: Atten_Unet.
-*  It is a varient from 3D-Unet + CBAM block. Each block was modified.
-*  The architecture for Atten_Unet
+Model proposed in this project: Atten_Unet.
+
+It is a varient from 3D-Unet + CBAM block. Each block was modified.
+
+The architecture for Atten_Unet
+
 ![image](https://github.com/sea-comet/Graduation/blob/master/images/model.png)
 
 # Results
-* For segmentation result: 
-* Here is the comparison between the predicted segmentation result and the ground truth labels for patient 9
+For segmentation result: 
+
+Here is the comparison between the predicted segmentation result and the ground truth labels for patient 9
+
 ### predicted segmentation result
 ![image](https://github.com/sea-comet/Graduation/blob/master/images/patient%209_Pred%20seg.png)
 ### ground truth labels
