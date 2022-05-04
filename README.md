@@ -64,6 +64,7 @@ The content in the `runs` folder.
             20220407_154427__fold0_etc.ymal # Used for testing
             - segs
               - BraTS20_Training_ID.nii
+              - ....
             model.txt     # model structure
             model_best.pth.tar     # model weights, used for validation and testing
             patients_indiv_perf.csv    # a log of every patient's segmentation performance in traning 
