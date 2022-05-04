@@ -21,7 +21,7 @@ I also prepared colab notebooks that allow you to run the algorithm on Google Co
 pip install -r requirements.txt
 ```
 
-# Training
+# Training & Validation
 
 First change your data folder by modifying the dataset path in `src/config.py` 
 * `BRATS_TRAIN_FOLDERS` is for 5-fold training and validation, which is the path to dataset with ground truth label "seg.nii" file. 
