@@ -99,7 +99,7 @@ python -m src.test -h
 如果上面链接失效，请用下面新的链接
 
 * 链接2: [百度网盘2](https://pan.baidu.com/s/1wyR8uKIQ4-0mD8sfMkpVOw)
-`提取码: ls1w`
+* `提取码: ls1w`
 
 It contains three seperate results for training & validation and testing. 
 
