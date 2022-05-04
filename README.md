@@ -9,7 +9,6 @@ Report and PPT and be found here:
 * Platform with GPU.
 * Code can be run on Google Colab
 
-
 # Fast running on Google Colab
 
 I also prepared colab notebooks that allow you to run the algorithm on Google Colab. Upload the file to Google Colab and then start training & validation or testing
