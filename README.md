@@ -1,7 +1,7 @@
 # Graduation Project: Brain tumor segmentation <br>(Dong Wanqi)
 
 # Report and PPT
-Reports and PPT and be found here:
+Report and PPT and be found here:
 * [Report](https://github.com/sea-comet/Graduation/blob/master/report%20and%20PPT/Dong%20Wanqi_2018213196_FinalReport.pdf)
 * [PPT](https://github.com/sea-comet/Graduation/blob/master/report%20and%20PPT/Dong%20Wanqi_2018213196_FinalViva.pdf)
 
