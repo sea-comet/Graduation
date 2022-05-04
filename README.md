@@ -1,6 +1,6 @@
 # Graduation Project: Brain tumor segmentation <br>(Dong Wanqi)
 # Environment 
-* Linux platform with GPU.
+* Platform with GPU.
 * Code can be run on Google Colab
 
 # Report and PPT
