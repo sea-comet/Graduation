@@ -98,7 +98,7 @@ The explanation of each file in the folder `3 run_Atten Unet_drop 0.2_noise (0.9
 # Model 
 Model proposed in this project: Atten_Unet. <br>
 It is a varient from 3D-Unet + CBAM block. Each block was modified. <br>
-The architecture for Atten_Unet
+The architecture for Atten_Unet:
 
 ![image](https://github.com/sea-comet/Graduation/blob/master/images/model.png)
 
