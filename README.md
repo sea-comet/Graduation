@@ -124,7 +124,7 @@ Here is the comparison between the predicted segmentation result and the ground 
 ![image](https://github.com/sea-comet/Graduation/blob/master/images/patient%209_Pred%20seg.png)
 ### ground truth labels
 ![image](https://github.com/sea-comet/Graduation/blob/master/images/patient%209_Ground%20truth.png)
-<br>
-They look very similar, isn't it?<br>
+<br><br>
+They look very similar, aren't they?<br>
 The qualitative results are also excellent. Please see the detailed explanation in the report.
 
