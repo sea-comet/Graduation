@@ -51,9 +51,11 @@ Note that the batch size should be set to 1, for data augmentation is done volum
 After training, you will have a `runs` folder created containing a directory for each run you have done.
 
 * For each run, a yaml file with the option used for the runs will be generated
+
 * A `segs` folder containing all the generated .nii.gz files for validation samples. These are the segmentation results.
 * First drag the orginal nii.gz file from any of the four modalities t1, t1ce, t2, flair into software `ITK-Snap`[[Download link]](http://www.itksnap.org/pmwiki/pmwiki.php?n=Downloads.SNAP3)(A specilaized software used for medical data visualization) to show the brain background, then drag the segmentation result `.nii` file in folder `segs` into the software ITK-Snap, too, then the segmentation result on the brain can be visualized.
 * You can also use the "display nii data.ipynb" file to see the segmentation
+
 
 The contents in the `runs` folder and their corresponding explanations.<br> Many files are created during training and validation containing the records and results.
 
