@@ -5,19 +5,18 @@ from torch import nn
 from torch.nn import functional as F
 
 
-def get_norm_layer(norm_type="group"):  # 默认的norm_type: 何恺明的 group normalization
+def get_norm_layer(norm_type="group"):  # norm_type:  group normalization Kaiming He
     if "group" in norm_type:
         try:
             grp_nb = int(norm_type.replace("group", ""))
-            return lambda planes: default_norm_layer(planes, groups=grp_nb)  # default_norm_layer 函数在上面
+            return lambda planes: default_norm_layer(planes, groups=grp_nb)  # default_norm_layer --> up
         except ValueError as e:
             print(e)
             print('using default group number')
             return default_norm_layer
     elif norm_type == "none":
         return None
-    else:       # 如果不是group也不是None,就用下面的默认的InstanceNorm3d
-        return lambda x: nn.InstanceNorm3d(x, affine=True)
+
 
 def default_norm_layer(planes, groups=16):
     groups_ = min(groups, planes)
@@ -30,7 +29,7 @@ def default_norm_layer(planes, groups=16):
 
 
 
-def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1, bias=False):  # kernel_size 是3的卷积！！
+def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1, bias=False):  # kernel_size 是3的卷积
     """3x3 convolution with padding"""
     return nn.Conv3d(in_planes, out_planes, kernel_size=3, stride=stride,
                      padding=dilation, groups=groups, bias=bias, dilation=dilation)  # group
@@ -45,11 +44,11 @@ class ConvBnRelu(nn.Sequential):
 
     def __init__(self, inplanes, planes, norm_layer=None, dilation=1, dropout=0):
         if norm_layer is not None:
-            super(ConvBnRelu, self).__init__(  # 传进去字典
+            super(ConvBnRelu, self).__init__(
                 OrderedDict(
                     [           # conv3x3 在上面
                         ('conv', conv3x3(inplanes, planes, dilation=dilation)),
-                        ('bn', norm_layer(planes)),  # norm_layer 是传进来的
+                        ('bn', norm_layer(planes)),
                         ('relu', nn.ReLU(inplace=True)),
                         ('dropout', nn.Dropout(p=dropout)),
                     ]
@@ -82,7 +81,7 @@ class UBlock(nn.Sequential):
         )
 
 
-class UBlockCbam(nn.Sequential):  # 在AttUnet中用的Block, 这个跟UBlock（2个卷积层）相比多了一个CBAM层
+class UBlockCbam(nn.Sequential):  # 在AttUnet中用的Block, 跟UBlock（2个卷积层）相比多了一个CBAM
     def __init__(self, inplanes, midplanes, outplanes, norm_layer, dilation=(1, 1), dropout=0):
         super(UBlockCbam, self).__init__(
             OrderedDict(
@@ -122,8 +121,8 @@ class CBAM(nn.Module):  # 一个ChannelGate加一个SpatialGate, gate_channels�
     def __init__(self, gate_channels, reduction_ratio=16, pool_types=None, norm_layer=None):
         super(CBAM, self).__init__()
         if pool_types is None:
-            pool_types = ['avg', 'max']                 # reduction_ratio是16
-        self.ChannelGate = ChannelGate(gate_channels, reduction_ratio, pool_types)  # pool_types 是 'avg'或'max'
+            pool_types = ['avg', 'max']
+        self.ChannelGate = ChannelGate(gate_channels, reduction_ratio, pool_types)  # pool_types  'avg' or 'max'
         self.SpatialGate = SpatialGate(norm_layer)
 
     def forward(self, x):
@@ -141,7 +140,7 @@ class ChannelGate(nn.Module):
     def __init__(self, gate_channels, reduction_ratio=16, pool_types=['avg', 'max']):
         super(ChannelGate, self).__init__()
         self.gate_channels = gate_channels
-        self.mlp = nn.Sequential(    # MLP 是多层感知器: Multilayer Perceptron
+        self.mlp = nn.Sequential(    # MLP: Multilayer Perceptron
             Flatten(),    # 先展平
             nn.Linear(gate_channels, gate_channels // reduction_ratio),  # 每个UBlock的输出维度 --> 除以16
             nn.ReLU(inplace=True),
@@ -159,7 +158,7 @@ class ChannelGate(nn.Module):
                 max_pool = F.max_pool3d(x, (x.size(2), x.size(3), x.size(4)), stride=(x.size(2), x.size(3), x.size(4)))
                 channel_att_raw = self.mlp(max_pool)
             if channel_att_sum is None:
-                channel_att_sum = channel_att_raw  # 就是这个
+                channel_att_sum = channel_att_raw
             else:
                 channel_att_sum = channel_att_sum + channel_att_raw
 
@@ -176,14 +175,14 @@ class SpatialGate(nn.Module):
     def __init__(self, norm_layer=None):
         super(SpatialGate, self).__init__()
         kernel_size = 7
-        self.compress = ChannelPool()  # 为什么这儿是2，1 ？？？？？对，它就是变成了channel = 1 !!!
+        self.compress = ChannelPool()  # channel = 2 --> channel = 1 !
         self.spatial = BasicConv(2, 1, kernel_size, stride=1, padding=(kernel_size - 1) // 2, norm_layer=norm_layer)
 
     def forward(self, x):
         x_compress = self.compress(x)
         x_out = self.spatial(x_compress)
         scale = torch.sigmoid(x_out)     # broadcasting
-        return x * scale  # 广播机制
+        return x * scale  
 
 
 if __name__ == '__main__':

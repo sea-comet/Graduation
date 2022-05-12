@@ -11,24 +11,24 @@ class Unet(nn.Module):
     """
     name = "Unet"
 
-    # 这里inplanes = 4, 就是4个模态的channel, num_classes = 3, width传入的是48
+    # 这里inplanes = 4, 就是4个模态的channel, num_classes = 3, width = 48
     def __init__(self, inplanes, num_classes, width, norm_layer=None, dropout=0,
                  **kwargs):
         super(Unet, self).__init__()
         features = [width * 2 ** i for i in range(4)]  # [48,96,192,384]
         print("features: ", features)
 
-        # UBlock 在layers.py里面 前,中，后features数量见后面
+        # UBlock --> layers.py
         self.encoder1 = UBlock(inplanes, features[0], features[0], norm_layer, dropout=dropout)  # 4，48，48
         self.encoder2 = UBlock(features[0], features[1], features[1], norm_layer, dropout=dropout)  # 48，96，96
         self.encoder3 = UBlock(features[1], features[2], features[2], norm_layer, dropout=dropout)  # 96，192，192
         self.encoder4 = UBlock(features[2], features[3], features[3], norm_layer, dropout=dropout)  # 192, 384，384
-        #  bottom这里有dilation: (2,2)
+        #  bottom, dilation: (2,2)
         self.bottom = UBlock(features[3], features[3], features[3], norm_layer, (2, 2), dropout=dropout)  # 384，384，384
 
         self.bottom_2 = ConvBnRelu(features[3] * 2, features[2], norm_layer, dropout=dropout)  # 384*2,192
 
-        self.downsample = nn.MaxPool3d(2, 2)  # 下采样 应该是除了channel其它都变了
+        self.downsample = nn.MaxPool3d(2, 2)  # 下采样, 除了channel其它都变了1/2
 
         self.decoder3 = UBlock(features[2] * 2, features[2], features[1], norm_layer, dropout=dropout)  # 384,192,96
         self.decoder2 = UBlock(features[1] * 2, features[1], features[0], norm_layer, dropout=dropout)  # 192,96,48
@@ -44,10 +44,10 @@ class Unet(nn.Module):
     def _init_weights(self):  # 初始化权重
         for m in self.modules():
             if isinstance(m, nn.Conv3d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')  # 何凯明的这玩意儿
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')  # Kaiming He
             elif isinstance(m, (nn.BatchNorm3d, nn.GroupNorm, nn.InstanceNorm3d)):
-                nn.init.constant_(m.weight, 1)  # weight初始化为1
-                nn.init.constant_(m.bias, 0)  # bias初始化为0
+                nn.init.constant_(m.weight, 1)  # weight initialize --> 1
+                nn.init.constant_(m.bias, 0)  # bias initialize --> 0
 
     def forward(self, x):
 
@@ -95,15 +95,15 @@ class Unet(nn.Module):
 
 
 # My modification: Atten_Unet
-class Atten_Unet(Unet):  # 继承Unet，forward函数和Unet一样
+class Atten_Unet(Unet):  # inherit Unet，forward same as Unet
     def __init__(self, inplanes, num_classes, width, norm_layer=None, dropout=0,
                  **kwargs):
         super(Unet, self).__init__()
         features = [width * 2 ** i for i in range(4)]
         print("model features: ", features)
 
-        # UBlockCbam 在layers.py 里面 后面两个卷积输出不equivalent的版本
-        # Atten_Unet 在encoder 使用了 UBlockCBAM !!添加了CBAM模块！！
+        # UBlockCbam --> layers.py
+        # Atten_Unet 在encoder 使用 UBlockCBAM, 添加了CBAM模块
         self.encoder1 = UBlockCbam(inplanes, features[0] // 2, features[0], norm_layer, dropout=dropout)  # 4，24，48
         self.encoder2 = UBlockCbam(features[0], features[1] // 2, features[1], norm_layer, dropout=dropout)  # 48，48，96
         self.encoder3 = UBlockCbam(features[1], features[2] // 2, features[2], norm_layer, dropout=dropout)  # 96，96，192
@@ -119,7 +119,7 @@ class Atten_Unet(Unet):  # 继承Unet，forward函数和Unet一样
 
         self.downsample = nn.MaxPool3d(2, 2)
 
-        # decoder 用的都是UBlock了
+        # decoder 用的UBlock
         self.decoder3 = UBlock(features[2] * 2, features[2], features[1], norm_layer, dropout=dropout)
         self.decoder2 = UBlock(features[1] * 2, features[1], features[0], norm_layer, dropout=dropout)
         self.decoder1 = UBlock(features[0] * 2, features[0], features[0], norm_layer, dropout=dropout)
