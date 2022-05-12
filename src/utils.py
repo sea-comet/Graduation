@@ -22,7 +22,7 @@ DICE = "dice"
 METRICS = [HAUSSDORF, DICE, SENS, SPEC]
 
 
-def save_args(args):  # 保存args设置，保存成yaml格式
+def save_args(args):  # save srgs as yaml format
     """Save parsed arguments to config file.
     """
     config = vars(args).copy()
@@ -34,13 +34,13 @@ def save_args(args):  # 保存args设置，保存成yaml格式
         yaml.dump(config, file)
 
 
-def save_checkpoint(state: dict, save_folder: pathlib.Path):  # 保存模型最好参数
+def save_checkpoint(state: dict, save_folder: pathlib.Path):  # save model weights
     """Save Training state."""
     best_filename = f'{str(save_folder)}/model_best.pth.tar'
     torch.save(state, best_filename)
 
 
-class AverageMeter(object):  # 更新数据，重置数据, 计算平均值
+class AverageMeter(object):  # update, reset, calculate
     """Computes and stores the average and current value."""
 
     def __init__(self, name, fmt=':f'):
@@ -125,7 +125,7 @@ def count_parameters(model):  # 计算model参数数量的函数
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
-def calculate_metrics(preds, targets, patient):   # 在generate_segmentations函数里被调用
+def calculate_metrics(preds, targets, patient):   # generate_segmentations里被调用
     """
 
     Parameters
@@ -192,7 +192,7 @@ def calculate_metrics(preds, targets, patient):   # 在generate_segmentations函
 
 
 def save_metrics(epoch, metrics, writer, current_epoch, save_folder=None):
-    metrics = list(zip(*metrics)) # 这是分别算好的ET,TC,WT的dice！！是每个人的3个metric
+    metrics = list(zip(*metrics)) # 这是分别算好的ET,TC,WT的dice, every patient 3个metric
     # print("save_metrics里面的metrics: ", metrics)
 
     metrics = [torch.tensor(dice, device="cpu").numpy() for dice in metrics]
@@ -223,24 +223,24 @@ def generate_segmentations(data_loader, model, writer, args):
         patient_id = batch["patient_id"][0]
         ref_path = batch["seg_path"][0] # 用来对比的ground truth
         crops_idx = batch["crop_indexes"]
-        inputs, pads = pad_batch1_to_compatible_size(inputs) # 把脑子每个维度填充到16倍数大小，pads是三维元组
-        # pad_batch1_to_compatible_size 函数在dataset下batch_utils.py里
+        inputs, pads = pad_batch1_to_compatible_size(inputs)
+        # pad_batch1_to_compatible_size --> batch_utils.py
         inputs = inputs.cuda() # pad好了的inputs
         with autocast():
             with torch.no_grad():
                 pre_segs = model(inputs)
-                pre_segs = torch.sigmoid(pre_segs) # 把概率映射到0~1之间
-        # 去掉padding
+                pre_segs = torch.sigmoid(pre_segs) # 0/1
+        # delete padding
         maxz, maxy, maxx = pre_segs.size(2) - pads[0], pre_segs.size(3) - pads[1], pre_segs.size(4) - pads[2]
         pre_segs = pre_segs[:, :, 0:maxz, 0:maxy, 0:maxx].cpu() # 去掉padding后的最小边框肿瘤
         # segs是整个脑子的大小
         segs = torch.zeros((1, 3, 155, 240, 240))
         # segs与预测的pre_segs（最小肿瘤框）合体，组合在一起
         segs[0, :, slice(*crops_idx[0]), slice(*crops_idx[1]), slice(*crops_idx[2])] = pre_segs[0]
-        segs = segs[0].numpy() > 0.5   # 这是预测的含完整3个label 1,2,4 的label图,只取出了一个脑子，
+        segs = segs[0].numpy() > 0.5
         # 现在seg的维度是（3，155，240，240）是对于ET,TC,WT 分3个channel的map图！！
 
-        et = segs[0]    # seg的维度为3的那3个图好像分别是：ET, NET+ET, NET+ET+edema，有重叠的内，中，外3层
+        et = segs[0]    # seg的维度为3的那3个图好像是：ET, NET+ET, NET+ET+edema，有重叠的内，中，外3层
         net = np.logical_and(segs[1], np.logical_not(et))
         ed = np.logical_and(segs[2], np.logical_not(segs[1]))
         labelmap = np.zeros(segs[0].shape) # 形状: (155,240,240),就是一个脑子, 要把ET,NET,EDEMA 放在一个脑子中呈现
@@ -259,10 +259,10 @@ def generate_segmentations(data_loader, model, writer, args):
         refmap_wt = np.logical_or(refmap_tc, ref_seg == 2)  # WT
         refmap = np.stack([refmap_et, refmap_tc, refmap_wt]) # 多了一维，现在是（3，155，240，240）是对于ET,TC,WT的map, 3为channel
 
-        # 计算model预测出的脑子和真实脑子的各种 metrics，得到一个list,是ET,TC,WT分别的metrics的字典, 包含[HAUSSDORF, DICE, SENS, SPEC]
-        patient_metric_list = calculate_metrics(segs, refmap, patient_id) # calculate_metrics函数在上面
+        # 计算model预测出的脑子和真实脑子的各种 metrics，get a list,是ET,TC,WT分别的metrics的字典,[HAUSSDORF, DICE, SENS, SPEC]
+        patient_metric_list = calculate_metrics(segs, refmap, patient_id) # calculate_metrics up
         metrics_list.append(patient_metric_list)
-        # labelmap 里是自己预测的图像，再加进真实图像, 做对比, nii.gz 文件存在了seg文件夹下面
+        # labelmap --> my prediction， nii.gz 文件存在了seg文件夹下
         labelmap.CopyInformation(ref_seg_img)
         print(f"Writing new segmentation as {args.seg_folder}/{patient_id}.nii.gz\n")
         sitk.WriteImage(labelmap, f"{args.seg_folder}/{patient_id}.nii.gz")
@@ -275,7 +275,7 @@ def generate_segmentations(data_loader, model, writer, args):
     haussdorf_figure = df.boxplot(METRICS[0], by="label").get_figure()
     writer.add_figure("benchmark/distance_measure", haussdorf_figure)
     grouped_df = df.groupby("label")[METRICS]
-    summary = grouped_df.mean().to_dict() # 求均值！！
+    summary = grouped_df.mean().to_dict() # mean
 
     for metric, label_values in summary.items():
         for label, score in label_values.items():

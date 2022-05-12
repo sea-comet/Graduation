@@ -5,6 +5,8 @@ BRATS_TRAIN_FOLDERS = "./../drive/My Drive/Dataset/BraTS2020_TrainingData/MICCAI
 BRATS_VAL_FOLDER = "./../drive/My Drive/Dataset/BraTS2020_ValidationData/MICCAI_BraTS2020_ValidationData"
 BRATS_TEST_FOLDER = "./../drive/My Drive/Dataset/BraTS2020_TestingData/MICCAI_BraTS2020_TestingData"
 
+# BRATS_VAL_FOLDER = "../Dataset_Small/BraTS2020_ValidationData/MICCAI_BraTS2020_ValidationData"
+# instruction: python -m src.test --config "../runs/Atten_Unet/Atten_Unet.yaml" --devices 0 --mode val
 
 def get_brats_folder(on="val"):
     if on == "train":

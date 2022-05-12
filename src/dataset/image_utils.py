@@ -4,10 +4,10 @@ import random
 
 import numpy as np
 
-# padding 或者cropping 缺就crop, 少就pad
+# padding or cropping crop, pad
 def pad_or_crop_image(image, seg=None, target_size=(128, 128, 128)):
     c, z, y, x = image.shape
-    # get_crop_slice函数在下面,切割出来（128，128，128）
+    # get_crop_slice down ,crop（128，128，128）
     z_slice, y_slice, x_slice = [get_crop_slice(target, dim) for target, dim in zip(target_size, (z, y, x))]
     image = image[:, z_slice, y_slice, x_slice]
     if seg is not None:
@@ -22,11 +22,11 @@ def pad_or_crop_image(image, seg=None, target_size=(128, 128, 128)):
     image = np.pad(image, padlist)
     if seg is not None:
         seg = np.pad(seg, padlist)
-        return image, seg       # seg 也一起给切割成了相同的形状
+        return image, seg       # seg crop to the same size
     return image
 
 
-def get_left_right_idx_should_pad(target_size, dim):  # tick
+def get_left_right_idx_should_pad(target_size, dim):
     if dim >= target_size:
         return [False]
     elif dim < target_size:
@@ -36,12 +36,12 @@ def get_left_right_idx_should_pad(target_size, dim):  # tick
         return True, left, right
 
 
-def get_crop_slice(target_size, dim): #切割脑子 # tick
+def get_crop_slice(target_size, dim):
     if dim > target_size:
         crop_extent = dim - target_size
         left = random.randint(0, crop_extent)
         right = crop_extent - left
-        return slice(left, dim - right) # dim-right = left+target_size，slice返回的可以放在列表里当切割index
+        return slice(left, dim - right) # dim-right = left+target_size，slice could return cropping index
     elif dim <= target_size:
         return slice(0, dim)
 

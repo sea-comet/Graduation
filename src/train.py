@@ -169,7 +169,7 @@ def main(args):
             pin_memory=False, num_workers=args.workers, collate_fn=determinist_collate)
         # determinist_collate --> batch_utils.py
 
-        bench_loader = torch.utils.data.DataLoader(
+        bench_loader  = torch.utils.data.DataLoader(
             bench_dataset, batch_size=1, num_workers=args.workers)
         print("Val dataset number of batch:", len(val_loader))
 
