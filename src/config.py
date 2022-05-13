@@ -2,7 +2,7 @@ import os
 
 # 用于 Google Golab的路径 -- Dataset
 BRATS_TRAIN_FOLDERS = "./../drive/My Drive/Dataset/BraTS2020_TrainingData/MICCAI_BraTS2020_TrainingData"
-BRATS_VAL_FOLDER = "./../drive/My Drive/Dataset_Small/BraTS2020_ValidationData/MICCAI_BraTS2020_ValidationData"
+BRATS_VAL_FOLDER = "./../drive/My Drive/Dataset_small/BraTS2020_ValidationData/MICCAI_BraTS2020_ValidationData"
 BRATS_TEST_FOLDER = "./../drive/My Drive/Dataset/BraTS2020_TestingData/MICCAI_BraTS2020_TestingData"
 
 # BRATS_VAL_FOLDER = "../Dataset_Small/BraTS2020_ValidationData/MICCAI_BraTS2020_ValidationData"
