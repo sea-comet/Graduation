@@ -153,10 +153,10 @@ def main(args):
         # print("model info: ", model)
 
     dataset_minmax = get_datasets(args.seed, False, no_seg=True,
-                                  on=args.on, normalisation="minmax")
+                                  on=args.mode, normalisation="minmax")
 
     dataset_zscore = get_datasets(args.seed, False, no_seg=True,
-                                  on=args.on, normalisation="zscore")
+                                  on=args.mode, normalisation="zscore")
 
     loader_minmax = torch.utils.data.DataLoader(
         dataset_minmax, batch_size=1, num_workers=2)

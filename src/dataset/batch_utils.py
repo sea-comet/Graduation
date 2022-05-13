@@ -14,7 +14,7 @@ def pad_batch_to_max_shape(batch):
     _, z_sizes, y_sizes, x_sizes = list(zip(*shapes))
     maxs = [int(max(z_sizes)), int(max(y_sizes)), int(max(x_sizes))]
     for i, max_ in enumerate(maxs):
-        max_stride = 16             # 注意16
+        max_stride = 16
         if max_ % max_stride != 0:
             # Make it divisible by 16
             maxs[i] = ((max_ // max_stride) + 1) * max_stride
@@ -33,11 +33,11 @@ def pad_batch_to_max_shape(batch):
 
  # 用于test.py 中的使用
 def pad_batch1_to_compatible_size(batch):
-    print("pad过的batch shape: ", batch.shape)
+    # print("pad过的batch shape: ", batch.shape)
     shape = batch.shape
     zyx = list(shape[-3:])
-    for i, dim in enumerate(zyx): # 循环为z,y,x维度的大小
-        max_stride = 16  # 让z,y,x 分别都为16的倍数
+    for i, dim in enumerate(zyx): # 循环z,y,x维度大小
+        max_stride = 16
         if dim % max_stride != 0:
             # Make it divisible by 16
             zyx[i] = ((dim // max_stride) + 1) * max_stride
@@ -45,5 +45,5 @@ def pad_batch1_to_compatible_size(batch):
     zpad, ypad, xpad = zmax - batch.size(2), ymax - batch.size(3), xmax - batch.size(4) # z,y,x分别需要填充的大小！！
     assert all(pad >= 0 for pad in (zpad, ypad, xpad)), "Negative padding value error !!"
     pads = (0, xpad, 0, ypad, 0, zpad)
-    batch = F.pad(batch, pads) # 填充过的脑子图！每个batch只有一个
+    batch = F.pad(batch, pads) # padded brain. Every batch only one
     return batch, (zpad, ypad, xpad)
